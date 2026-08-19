@@ -1,0 +1,85 @@
+{% extends "layouts/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Dispatch Goods — WareFlow{% endblock %}
+
+{% block dashboard_content %}
+<div class="form-page-header">
+    <div class="form-page-heading">
+        <div class="form-page-icon form-page-icon--dispatch">
+            <i class="bi bi-box-arrow-up" aria-hidden="true"></i>
+        </div>
+        <div>
+            <h1 class="form-page-title">Dispatch Goods</h1>
+            <p class="form-page-subtitle">Log outbound stock leaving a warehouse location</p>
+        </div>
+    </div>
+
+    <div class="date-badge">
+        <i class="bi bi-calendar3" aria-hidden="true"></i>
+        {{ form.date }}
+    </div>
+</div>
+
+<div class="form-card">
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-field">
+                    <label for="id_product" class="form-field-label">
+                        <i class="bi bi-upc-scan" aria-hidden="true"></i> Product (SKU)
+                    </label>
+                    {% comment %} 
+                        No data-autofill attributes needed here — Dispatch has
+                        no Supplier field. Rendered manually only to keep the
+                        SKU-first label format identical to Receive Goods. 
+                    {% endcomment %}
+                    <select name="product" id="id_product" class="form-select" required>
+                        <option value="">Select a product…</option>
+                        {% for product in form.fields.product.queryset %}
+                            <option value="{{ product.pk }}">{{ product.sku }} — {{ product.name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if form.product.errors %}
+                        <div class="text-danger small mt-1">{{ form.product.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-field">
+                    <label for="{{ form.location.id_for_label }}" class="form-field-label">
+                        <i class="bi bi-geo-alt" aria-hidden="true"></i> Location
+                    </label>
+                    {{ form.location }}
+                    {% if form.location.errors %}
+                        <div class="text-danger small mt-1">{{ form.location.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-field form-field--quantity">
+                    <label for="{{ form.quantity.id_for_label }}" class="form-field-label">
+                        <i class="bi bi-boxes" aria-hidden="true"></i> Quantity
+                    </label>
+                    {{ form.quantity }}
+                    {% if form.quantity.errors %}
+                        <div class="text-danger small mt-1">{{ form.quantity.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-dispatch">
+                <i class="bi bi-send-check" aria-hidden="true"></i> Dispatch Stock
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

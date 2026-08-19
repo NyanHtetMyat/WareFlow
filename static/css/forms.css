@@ -1,0 +1,166 @@
+/*
+ * forms.css
+ * ─────────────────────────────────────────────
+ * Styling for WareFlow's data-entry forms (Receive Goods, Dispatch
+ * Goods, and future forms: Stock Adjustment, Product, Supplier,
+ * Location, User creation). Works alongside Bootstrap's own form
+ * classes (form-select, form-control) rather than replacing them —
+ * these rules only add WareFlow's visual identity on top.
+ */
+
+/* ═══════════════════ FORM PAGE HEADER ═══════════════════ */
+
+.form-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.form-page-heading {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.form-page-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    font-size: 1.4rem;
+    color: var(--color-text-inverse);
+    flex-shrink: 0;
+}
+
+/* Receive = green (incoming stock, positive action).
+   Dispatch = amber (outbound, matches the warehouse safety-signage
+   accent already used elsewhere for anything that draws attention). */
+.form-page-icon--receive {
+    background-color: var(--color-success);
+}
+
+.form-page-icon--dispatch {
+    background-color: var(--color-accent);
+}
+
+.form-page-title {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.form-page-subtitle {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+}
+
+/* Read-only date shown as an information chip beside the title,
+   rather than as a greyed-out input row inside the form itself. */
+.date-badge {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 0.5rem var(--space-md);
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.date-badge input {
+    /* Strips Bootstrap's default input styling (border, background,
+       padding, forced width:100%) so the disabled date field reads
+       as plain text inside the badge, not a nested input box. */
+    all: unset;
+    color: inherit;
+    font: inherit;
+}
+
+/* ═══════════════════ FORM CARD ═══════════════════ */
+
+.form-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-xl);
+    max-width: 720px;
+}
+
+/* ═══════════════════ ICON-LABELED FIELDS ═══════════════════ */
+
+.form-field {
+    margin-bottom: var(--space-lg);
+}
+
+.form-field-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--color-text);
+}
+
+.form-field-label i {
+    color: var(--color-primary);
+    font-size: 1rem;
+}
+
+/* Quantity is the most consequential number on these forms, so it
+   gets slightly larger type to draw the eye before submission. */
+.form-field--quantity input {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+/* Supplier auto-fills from the selected product and can't be typed
+   into directly, so it's visually distinguished from editable
+   fields instead of looking like a broken/disabled input. */
+.form-field-readonly {
+    background-color: var(--color-bg);
+    color: var(--color-text-muted);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-md);
+    margin-top: var(--space-xl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--color-border);
+}
+
+.btn-receive {
+    background-color: var(--color-success);
+    border-color: var(--color-success);
+    color: var(--color-text-inverse);
+}
+
+.btn-receive:hover {
+    background-color: #268354;
+    border-color: #268354;
+    color: var(--color-text-inverse);
+}
+
+.btn-dispatch {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-text-inverse);
+}
+
+.btn-dispatch:hover {
+    background-color: #cf7414;
+    border-color: #cf7414;
+    color: var(--color-text-inverse);
+}
