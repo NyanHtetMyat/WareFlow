@@ -20,7 +20,10 @@ class WareFlowLoginForm(AuthenticationForm):
 
     username = forms.CharField(
         widget=forms.TextInput(attrs={
-            'class': 'form-control',
+            # "auth-field" strips the input's own border/background so
+            # it sits invisibly inside the .auth-input-group capsule,
+            # which owns the visible border and focus highlight instead.
+            'class': 'form-control auth-field',
             'placeholder': 'Username',
             'autofocus': True,
         })
@@ -28,7 +31,7 @@ class WareFlowLoginForm(AuthenticationForm):
 
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={
-            'class': 'form-control',
+            'class': 'form-control auth-field',
             'placeholder': 'Password',
         })
     )
