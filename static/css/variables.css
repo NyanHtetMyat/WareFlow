@@ -1,0 +1,51 @@
+/*
+ * variables.css
+ * ─────────────────────────────────────────────
+ * Central design tokens for WareFlow. Every color, spacing value,
+ * and radius used across the project should reference one of these
+ * variables rather than being hardcoded in individual stylesheets.
+ * This keeps the visual system consistent and easy to re-theme.
+ */
+
+:root {
+    /* ── Brand Colors ──────────────────────────────────────────── */
+    --color-primary: #1E2A45;        /* Deep slate navy - sidebar/header base */
+    --color-primary-hover: #2A3B5C;  /* Lighter navy for hover/active states */
+    --color-accent: #E8871E;         /* Warehouse safety amber - alerts, highlights */
+
+    /* ── Status Colors ─────────────────────────────────────────── */
+    --color-success: #2F9E63;
+    --color-warning: #E8871E;
+    --color-danger: #D64545;
+
+    /* ── Neutral / Surface Colors ──────────────────────────────── */
+    --color-bg: #F4F6F8;
+    --color-surface: #FFFFFF;
+    --color-border: #E2E5EA;
+
+    /* ── Text Colors ───────────────────────────────────────────── */
+    --color-text: #1B1F27;
+    --color-text-muted: #6B7280;
+    --color-text-inverse: #FFFFFF;
+
+    /* ── Spacing Scale ─────────────────────────────────────────── */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+
+    /* ── Border Radius ─────────────────────────────────────────── */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+
+    /* ── Shadows ───────────────────────────────────────────────── */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+    /* ── Sidebar Sizing ────────────────────────────────────────── */
+    --sidebar-width-expanded: 250px;
+    --sidebar-width-compact: 72px;
+    --header-height: 70px;
+}

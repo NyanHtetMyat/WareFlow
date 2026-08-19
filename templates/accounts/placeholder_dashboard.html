@@ -1,0 +1,30 @@
+{% extends "layouts/dashboard_base.html" %}
+{% comment %}
+  ────────────────────────────────────────────────────────────────
+  TEMPORARY PAGE — SCHEDULED FOR REPLACEMENT
+  ────────────────────────────────────────────────────────────────
+  This template exists only because accounts.views.dashboard_redirect
+  needs somewhere to render after a successful login, and the real
+  Staff/Manager dashboards (reports app) don't exist yet.
+
+  Once reports/views.py has staff_dashboard and manager_dashboard views,
+  this file should be deleted and accounts.views.dashboard_redirect
+  should redirect to those views based on request.user.role, instead
+  of rendering this template. See the matching comment in
+  accounts/views.py for the exact redirect logic to add.
+  ────────────────────────────────────────────────────────────────
+{% endcomment %}
+
+{% block title %}Dashboard — WareFlow{% endblock %}
+
+{% block dashboard_content %}
+<div class="container py-5 text-center">
+    <h1 class="mb-3">Welcome to WareFlow</h1>
+    <p class="text-muted">You are logged in as: <strong>{{ role }}</strong></p>
+    <p class="text-muted">
+        This is a temporary landing page. Your real {{ role }} dashboard
+        will appear here once it has been built.
+    </p>
+    <a href="{% url 'accounts:logout' %}" class="btn btn-outline-secondary mt-3">Logout</a>
+</div>
+{% endblock %}

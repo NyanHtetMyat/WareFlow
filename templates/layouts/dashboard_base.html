@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{#
+  Layout for all authenticated application pages (Staff, Manager, and
+  eventually Admin). Provides the shared shell: sidebar + header + main
+  content area, using a CSS Grid layout.
+
+  This structure follows the same grid concept approved from the reference
+  sidebar behavior: dashboard-layout / sidebar / header / main as named
+  grid areas, styled later in static/css/dashboard.css.
+#}
+
+{% block body_class %}dashboard-page{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+
+    <aside class="sidebar">
+        {% include "components/sidebar.html" %}
+    </aside>
+
+    <header class="header">
+        {% include "components/navbar.html" %}
+    </header>
+
+    <main class="main">
+        {% block dashboard_content %}{% endblock %}
+    </main>
+
+</div>
+{% endblock %}

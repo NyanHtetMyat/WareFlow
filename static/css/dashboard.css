@@ -1,0 +1,56 @@
+/*
+ * dashboard.css
+ * ─────────────────────────────────────────────
+ * Defines the overall authenticated app shell layout: sidebar,
+ * header, and main content area, arranged with CSS Grid.
+ */
+
+.dashboard-layout {
+    display: grid;
+    grid-template-areas:
+        "sidebar header"
+        "sidebar main";
+    grid-template-columns: var(--sidebar-width-expanded) 1fr;
+    grid-template-rows: var(--header-height) 1fr;
+    min-height: 100vh;
+}
+
+.sidebar {
+    grid-area: sidebar;
+    background-color: var(--color-primary);
+    color: var(--color-text-inverse);
+    display: flex;
+    flex-direction: column;
+
+    /* Required so hovered nav labels (position: absolute) can float
+       outside the sidebar's own box instead of being clipped. */
+    overflow: visible;
+}
+
+.header {
+    grid-area: header;
+    background-color: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-lg);
+}
+
+.main {
+    grid-area: main;
+    background-color: var(--color-bg);
+    padding: var(--space-lg);
+    overflow-y: auto;
+}
+
+/* ───── Compact sidebar breakpoint ─────
+   Below this width, the sidebar switches to icon-only mode. Nav
+   labels are hidden by default and only appear as a floating
+   overlay when a nav item is hovered or focused — see the
+   sidebar section of components.css for that behavior. */
+@media (max-width: 768px) {
+    .dashboard-layout {
+        grid-template-columns: var(--sidebar-width-compact) 1fr;
+    }
+}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% comment %}
+  Layout for authentication pages (login, and later: register/reset password
+  if ever needed). Intentionally minimal — no sidebar or navbar, since these
+  pages appear before a user is authenticated.
+
+  Adds a distinct body class so auth pages can receive their own background
+  styling (e.g. a full-page gradient or brand color) once static/css/base.css
+  is built, without affecting dashboard pages.
+{% endcomment %}
+
+{% block body_class %}auth-page{% endblock %}

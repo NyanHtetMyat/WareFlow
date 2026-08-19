@@ -1,0 +1,239 @@
+/*
+ * components.css
+ * ─────────────────────────────────────────────
+ * Reusable UI component styles shared across pages.
+ * Currently contains: sidebar navigation, navbar/top header.
+ * More components (data_table, modal, toast, pagination, etc.)
+ * will be appended here as they are built, each under its own
+ * clearly labeled section.
+ */
+
+/* ═══════════════════ SIDEBAR NAVIGATION ═══════════════════ */
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+    height: var(--header-height);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.nav-items {
+    list-style: none;
+    margin: 0;
+    padding: var(--space-md) 0;
+    flex-grow: 1;
+}
+
+.nav-item {
+    /* Positioning anchor for the floating label overlay below.
+       This is the core of the reveal pattern: the label is
+       positioned relative to THIS element, not the whole sidebar. */
+    position: relative;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 0.15s ease;
+}
+
+.nav-link:hover,
+.nav-link:focus-visible {
+    background-color: var(--color-primary-hover);
+    color: var(--color-text-inverse);
+}
+
+.nav-link.active {
+    background-color: var(--color-primary-hover);
+    color: var(--color-text-inverse);
+    border-left: 3px solid var(--color-accent);
+}
+
+.nav-icon {
+    font-size: 1.1rem;
+    width: 1.25rem;
+    flex-shrink: 0;
+    text-align: center;
+}
+
+.nav-logout {
+    margin-top: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ───── Compact mode: icon-only sidebar with floating label reveal ─────
+
+   This is the interaction pattern carried over from the reference
+   project: the nav item is the positioning context (position: relative),
+   and the label is pulled out of normal document flow
+   (position: absolute) so it floats over the page on hover instead of
+   pushing content or resizing the sidebar.
+
+   Improvements over the original version:
+     - width uses max-content instead of a hardcoded pixel value,
+       so labels of any length work without editing CSS per item.
+     - only opacity/transform are animated (not width), since width
+       transitions to "auto"-like values are unreliable across browsers.
+     - :focus-within is included alongside :hover so keyboard users
+       get the same label reveal that mouse users get.
+     - Touch devices don't have real hover, so functionality does not
+       depend on the label appearing: tapping an icon still navigates
+       immediately. The label reveal is a helpful extra, not a
+       requirement, for touch users. */
+@media (max-width: 768px) {
+
+    .sidebar-title {
+        display: none;
+    }
+
+    .nav-label {
+        position: absolute;
+        left: 100%;
+        top: 0;
+        height: 100%;
+
+        display: flex;
+        align-items: center;
+
+        margin: 0;
+        padding: 0 var(--space-md);
+        background-color: var(--color-primary-hover);
+        color: var(--color-text-inverse);
+        white-space: nowrap;
+
+        /* Hidden by default. Width/opacity double-hiding (rather than
+           display:none) keeps the text available to screen readers
+           and gives the transition something to animate between. */
+        width: 0;
+        opacity: 0;
+        overflow: hidden;
+        pointer-events: none;
+
+        transform: translateX(-4px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .nav-item:hover .nav-label,
+    .nav-item:focus-within .nav-label {
+        width: max-content;
+        opacity: 1;
+        transform: translateX(0);
+        pointer-events: auto;
+    }
+}
+
+/* ═══════════════════ NAVBAR / TOP HEADER ═══════════════════ */
+/* Styles for templates/components/navbar.html. Paired with the
+   .header grid area already defined in dashboard.css (which
+   handles the flex/space-between layout) — this section only
+   styles what's INSIDE that header. */
+
+.navbar-title .page-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0;
+}
+
+.navbar-user-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+
+    background: none;
+    border: none;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.navbar-user-toggle:hover,
+.navbar-user-toggle:focus-visible {
+    background-color: var(--color-bg);
+}
+
+.user-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--color-primary);
+    color: var(--color-text-inverse);
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.navbar-user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.3;
+}
+
+.navbar-username {
+    font-weight: 600;
+    color: var(--color-text);
+    font-size: 0.9rem;
+}
+
+.navbar-caret {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+/* Role badges — small colored pill next to the username. Color
+   communicates role at a glance without needing to read the text.
+   Class name is composed dynamically in the template via
+   "role-badge--{{ user.role|lower }}", so adding a 4th role later
+   only needs a new rule here, not a template change. */
+.role-badge {
+    display: inline-block;
+    padding: 0.1rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.role-badge--staff {
+    background-color: var(--color-border);
+    color: var(--color-text-muted);
+}
+
+.role-badge--manager {
+    background-color: var(--color-accent);
+    color: var(--color-text-inverse);
+}
+
+.role-badge--admin {
+    background-color: var(--color-primary);
+    color: var(--color-text-inverse);
+}
+
+/* On very small screens, hide the name+badge text and keep just the
+   avatar circle as a compact "who am I / logout" entry point.
+   Matches the responsive priority rules: desktop gets full detail,
+   mobile gets basic usability rather than a cramped version of the
+   same layout. */
+@media (max-width: 480px) {
+    .navbar-user-info {
+        display: none;
+    }
+}

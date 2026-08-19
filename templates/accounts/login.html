@@ -1,0 +1,50 @@
+{% extends "layouts/auth_base.html" %}
+{% comment %}
+  This page uses the auth_base layout rather than dashboard_base,
+  because login/authentication pages are meant to look visually
+  distinct from the main application shell (no sidebar/navbar here).
+{% endcomment %}
+
+{% block title %}Login — WareFlow{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-center align-items-center min-vh-100">
+    <div class="card shadow-sm p-4" style="width: 100%; max-width: 400px;">
+
+        <div class="text-center mb-4">
+            <h2 class="mb-1">WareFlow</h2>
+            <p class="text-muted mb-0">Warehouse Management System</p>
+        </div>
+
+        {# Shows form-wide errors, e.g. "invalid username or password" #}
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label for="{{ form.username.id_for_label }}" class="form-label">Username</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div class="text-danger small mt-1">{{ form.username.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.password.id_for_label }}" class="form-label">Password</label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                    <div class="text-danger small mt-1">{{ form.password.errors }}</div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+        </form>
+
+    </div>
+</div>
+{% endblock %}
