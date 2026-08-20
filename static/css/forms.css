@@ -164,3 +164,159 @@
     border-color: #cf7414;
     color: var(--color-text-inverse);
 }
+
+/* ═══════════════════ ADJUSTMENT FORM ICON VARIANT ═══════════════════ */
+
+.form-page-icon--adjustment {
+    background-color: var(--color-adjustment);
+}
+
+.btn-adjustment {
+    background-color: var(--color-adjustment);
+    border-color: var(--color-adjustment);
+    color: var(--color-text-inverse);
+}
+.btn-adjustment:hover {
+    background-color: var(--color-adjustment-hover);
+    border-color: var(--color-adjustment-hover);
+    color: var(--color-text-inverse);
+}
+
+/* ═══════════════════ INCREASE / DECREASE TOGGLE ═══════════════════ */
+/* A styled two-option toggle standing in for a raw signed-number
+   input — "Increase/Decrease" reads far more clearly than expecting
+   Staff to type a minus sign correctly. Built on real <input
+   type="radio"> elements (visually hidden, not display:none) so
+   keyboard navigation and screen readers keep working natively;
+   only the visual presentation is custom. */
+
+.direction-toggle {
+    display: flex;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+
+.direction-toggle input[type="radio"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.direction-option {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.direction-toggle input[type="radio"]:focus-visible + .direction-option {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+input#direction-increase:checked + .direction-option--increase {
+    border-color: var(--color-success);
+    background-color: rgba(47, 158, 99, 0.08);
+    color: var(--color-success);
+}
+
+input#direction-decrease:checked + .direction-option--decrease {
+    border-color: var(--color-danger);
+    background-color: rgba(214, 69, 69, 0.08);
+    color: var(--color-danger);
+}
+
+.adjustment-magnitude-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.adjustment-magnitude-row input[type="number"] {
+    max-width: 140px;
+}
+
+.adjustment-magnitude-row .quantity-change-badge {
+    font-size: 1.1rem;
+    padding: 0.4rem 0.9rem;
+}
+
+/* ═══════════════════ REASON CHARACTER COUNTER ═══════════════════ */
+
+.reason-counter {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    margin-top: 0.25rem;
+}
+
+/* ═══════════════════ RECENT REQUESTS (Staff's own history) ═══════════════════ */
+
+.recent-requests {
+    max-width: 720px;
+    margin-top: var(--space-xl);
+}
+
+.recent-requests-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: var(--space-md);
+}
+
+.recent-requests-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.recent-request-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+}
+
+.recent-request-main {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    font-weight: 500;
+}
+
+.recent-request-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+
+/* ═══════════════════ CHAINED LOCATION STOCK INFO ═══════════════════ */
+/* Small helper text under the Location dropdown on Dispatch/
+   Adjustment forms, showing current quantity once both Product and
+   Location are selected. Populated by inventory_chain.js. */
+
+#stock-info {
+    min-height: 1.2em; /* reserves space so the layout doesn't jump when this text appears */
+}
+
+.stock-info-active {
+    color: var(--color-primary);
+    font-weight: 600;
+}

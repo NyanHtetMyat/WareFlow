@@ -1,0 +1,136 @@
+{% extends "layouts/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Stock Adjustment Request — WareFlow{% endblock %}
+
+{% block dashboard_content %}
+<div class="form-page-header">
+    <div class="form-page-heading">
+        <div class="form-page-icon form-page-icon--adjustment">
+            <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
+        </div>
+        <div>
+            <h1 class="form-page-title">Stock Adjustment Request</h1>
+            <p class="form-page-subtitle">Report a discrepancy for Manager review</p>
+        </div>
+    </div>
+</div>
+
+<div class="form-card">
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-field">
+                    <label for="{{ form.product.id_for_label }}" class="form-field-label">
+                        <i class="bi bi-upc-scan" aria-hidden="true"></i> Product (SKU)
+                    </label>
+                    {% comment %} 
+                        Only products with existing stock are offered — an
+                        adjustment corrects existing inventory, it isn't a
+                        substitute for Receive Goods. See
+                        StockAdjustmentRequestForm.__init__ in forms.py. 
+                    {% endcomment %}
+                    {{ form.product }}
+                    {% if form.product.errors %}
+                        <div class="text-danger small mt-1">{{ form.product.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-field">
+                    <label for="id_location" class="form-field-label">
+                        <i class="bi bi-geo-alt" aria-hidden="true"></i> Location
+                    </label>
+                    <select name="location" id="id_location" class="form-select" disabled required>
+                        <option value="">Select a product first…</option>
+                    </select>
+                    {% if form.location.errors %}
+                        <div class="text-danger small mt-1">{{ form.location.errors }}</div>
+                    {% endif %}
+                    <div class="form-text" id="stock-info"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-field">
+            <label class="form-field-label">
+                <i class="bi bi-sliders" aria-hidden="true"></i> Adjustment
+            </label>
+
+            <div class="direction-toggle">
+                <input type="radio" name="adjustment_direction" id="direction-increase" value="increase" checked>
+                <label for="direction-increase" class="direction-option direction-option--increase">
+                    <i class="bi bi-arrow-up-circle" aria-hidden="true"></i> Increase Stock
+                </label>
+
+                <input type="radio" name="adjustment_direction" id="direction-decrease" value="decrease">
+                <label for="direction-decrease" class="direction-option direction-option--decrease">
+                    <i class="bi bi-arrow-down-circle" aria-hidden="true"></i> Decrease Stock
+                </label>
+            </div>
+
+            <div class="adjustment-magnitude-row">
+                <input type="number" id="id_magnitude" class="form-control" min="1" value="1" required>
+                <span class="quantity-change-badge quantity-change-badge--increase" id="quantity-preview">+1</span>
+            </div>
+
+            {{ form.quantity_change }}
+            {% if form.quantity_change.errors %}
+                <div class="text-danger small mt-1">{{ form.quantity_change.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-field">
+            <label for="{{ form.reason.id_for_label }}" class="form-field-label">
+                <i class="bi bi-chat-left-text" aria-hidden="true"></i> Reason
+            </label>
+            {{ form.reason }}
+            <div class="d-flex justify-content-end">
+                <span class="reason-counter" id="reason-counter">0 / 500</span>
+            </div>
+            {% if form.reason.errors %}
+                <div class="text-danger small mt-1">{{ form.reason.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-adjustment">
+                <i class="bi bi-send-check" aria-hidden="true"></i> Submit Request
+            </button>
+        </div>
+    </form>
+</div>
+
+{% if recent_requests %}
+<div class="recent-requests">
+    <h2 class="recent-requests-title">Your Recent Requests</h2>
+    <div class="recent-requests-list">
+        {% for req in recent_requests %}
+        <div class="recent-request-item">
+            <div class="recent-request-main">
+                <span>{{ req.product.sku }} — {{ req.product.name }}</span>
+                <span class="quantity-change-badge {% if req.quantity_change >= 0 %}quantity-change-badge--increase{% else %}quantity-change-badge--decrease{% endif %}">
+                    {% if req.quantity_change > 0 %}+{% endif %}{{ req.quantity_change }}
+                </span>
+            </div>
+            <div class="recent-request-meta">
+                <span>{{ req.location }}</span>
+                <span>{{ req.created_at|date:"M d, Y" }}</span>
+                <span class="status-badge status-badge--{{ req.status|lower }}">{{ req.get_status_display }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{{ inventory_map|json_script:"inventory-map-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/inventory_chain.js' %}"></script>
+<script src="{% static 'js/adjustments.js' %}"></script>
+{% endblock %}

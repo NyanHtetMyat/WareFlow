@@ -93,8 +93,9 @@
         </li>
 
         <li class="nav-item">
-            {# TODO: replace href="#" with {% url 'warehouse:my_adjustment_requests' %} #}
-            <a href="#" class="nav-link" title="Adjustment Requests">
+            <a href="{% url 'warehouse:submit_adjustment_request' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'submit_adjustment_request' %}active{% endif %}"
+               title="Adjustment Requests">
                 <i class="bi bi-arrow-left-right nav-icon" aria-hidden="true"></i>
                 <span class="nav-label">Adjustment Requests</span>
             </a>
@@ -143,8 +144,9 @@
         </li>
 
         <li class="nav-item">
-            {# TODO: replace href="#" with {% url 'warehouse:adjustment_requests' %} #}
-            <a href="#" class="nav-link" title="Adjustment Requests">
+            <a href="{% url 'warehouse:adjustment_requests' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'adjustment_requests' %}active{% endif %}"
+               title="Adjustment Requests">
                 <i class="bi bi-arrow-left-right nav-icon" aria-hidden="true"></i>
                 <span class="nav-label">Adjustment Requests</span>
             </a>

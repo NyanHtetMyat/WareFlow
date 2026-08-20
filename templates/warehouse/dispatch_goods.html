@@ -31,10 +31,11 @@
                     <label for="id_product" class="form-field-label">
                         <i class="bi bi-upc-scan" aria-hidden="true"></i> Product (SKU)
                     </label>
-                    {% comment %} 
-                        No data-autofill attributes needed here — Dispatch has
-                        no Supplier field. Rendered manually only to keep the
-                        SKU-first label format identical to Receive Goods. 
+                    {% comment %}
+                        Only products that currently have stock somewhere are
+                        offered — Dispatch can only remove EXISTING inventory,
+                        never invent a new stock position. See
+                        DispatchGoodsForm.__init__ in forms.py.
                     {% endcomment %}
                     <select name="product" id="id_product" class="form-select" required>
                         <option value="">Select a product…</option>
@@ -50,13 +51,21 @@
 
             <div class="col-md-6">
                 <div class="form-field">
-                    <label for="{{ form.location.id_for_label }}" class="form-field-label">
+                    <label for="id_location" class="form-field-label">
                         <i class="bi bi-geo-alt" aria-hidden="true"></i> Location
                     </label>
-                    {{ form.location }}
+                    {% comment %} 
+                        Populated dynamically by inventory_chain.js once a
+                        Product is chosen above — starts disabled since
+                        there's nothing valid to show until then.
+                    {% endcomment %}
+                    <select name="location" id="id_location" class="form-select" disabled required>
+                        <option value="">Select a product first…</option>
+                    </select>
                     {% if form.location.errors %}
                         <div class="text-danger small mt-1">{{ form.location.errors }}</div>
                     {% endif %}
+                    <div class="form-text" id="stock-info"></div>
                 </div>
             </div>
         </div>
@@ -82,4 +91,10 @@
         </div>
     </form>
 </div>
+
+{{ inventory_map|json_script:"inventory-map-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/inventory_chain.js' %}"></script>
 {% endblock %}

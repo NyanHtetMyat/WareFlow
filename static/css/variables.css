@@ -48,4 +48,10 @@
     --sidebar-width-expanded: 250px;
     --sidebar-width-compact: 72px;
     --header-height: 70px;
+
+    /* Adjustment workflow gets its own identity, distinct from
+    Receive (green) and Dispatch (amber) — signals "review/
+    correction" rather than a routine stock movement. */
+    --color-adjustment: #6366F1;
+    --color-adjustment-hover: #4F46E5;
 }

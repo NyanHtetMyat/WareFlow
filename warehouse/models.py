@@ -13,6 +13,7 @@ interpretation rather than a 1:1 copy.
 """
 
 from django.conf import settings
+from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 
 
@@ -33,8 +34,6 @@ class Category(models.Model):
         verbose_name_plural = "Categories"
 
     def __str__(self):
-        # Shown in Django admin, shell, and anywhere a Category is
-        # rendered as plain text — keeps debugging readable.
         return self.name
 
 
@@ -60,20 +59,42 @@ class Supplier(models.Model):
 
 class Location(models.Model):
     """
-    A physical storage location, identified by zone/rack/bin
-    (e.g. Zone A / Rack 14 / Bin 05).
+    A physical storage location, identified by zone/rack/bin.
 
-    INHERITED DECISION: the (zone, rack, bin) combination is
-    unique. This wasn't drawn explicitly in the ER diagram, but it
-    was agreed in an earlier session and makes real-world sense —
-    the same physical bin shouldn't be represented by two different
-    rows. Flagging it here since it wasn't in the doc I re-read
-    this session; remove the constraint below if you disagree.
+    Rack and bin are stored as plain integers, never as formatted
+    text — "01" is a DISPLAY concern only, handled entirely in
+    __str__() below. Storing "Rack 01" or "B01" directly in these
+    fields is exactly what this design avoids: it was the source of
+    inconsistent, hard-to-read records before this change (a Staff
+    member could previously type "Rack 01" in one row and "01" in
+    another for the same physical shelf).
+
+    Canonical display format: {ZONE}-R{RACK:02d}-B{BIN:02d}
+        zone="A", rack=1, bin=1   -> "A-R01-B01"
+        zone="B", rack=12, bin=4  -> "B-R12-B04"
+
+    The (zone, rack, bin) combination is unique — the same physical
+    bin should never be represented by two different rows.
     """
 
-    zone = models.CharField(max_length=50, help_text="e.g. 'Zone A'")
-    rack = models.CharField(max_length=50, help_text="e.g. 'Rack 14'")
-    bin = models.CharField(max_length=50, help_text="e.g. 'Bin 05'")
+    zone = models.CharField(
+        max_length=10,
+        validators=[
+            RegexValidator(
+                r'^[A-Za-z]+$',
+                "Zone must contain letters only, e.g. 'A' or 'B' — no numbers or spaces.",
+            )
+        ],
+        help_text="Short alphabetic zone code, e.g. 'A'. Stored uppercase automatically.",
+    )
+    rack = models.PositiveIntegerField(
+        validators=[MinValueValidator(1)],
+        help_text="Rack number, 1 or greater. Stored as a plain number, not 'R01'.",
+    )
+    bin = models.PositiveIntegerField(
+        validators=[MinValueValidator(1)],
+        help_text="Bin number, 1 or greater. Stored as a plain number, not 'B01'.",
+    )
 
     class Meta:
         ordering = ["zone", "rack", "bin"]
@@ -84,12 +105,19 @@ class Location(models.Model):
             )
         ]
 
+    def save(self, *args, **kwargs):
+        # Normalizes casing at the database level so "a" and "A" can
+        # never accidentally become two different zones — enforced
+        # here rather than only in a form, so this holds true even
+        # for rows created via the Django admin or the shell.
+        self.zone = self.zone.upper()
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        # e.g. "Zone A / Rack 14 / Bin 05" — this exact format is
-        # also what AuditLog.location_info snapshots later, so
-        # keep this __str__ and that snapshot logic in sync when
-        # you build the services layer.
-        return f"{self.zone} / {self.rack} / {self.bin}"
+        # This exact format is what every dropdown, audit log
+        # snapshot, and review card displays across the whole app —
+        # changing this one line changes the format everywhere.
+        return f"{self.zone}-R{self.rack:02d}-B{self.bin:02d}"
 
 
 class Product(models.Model):
@@ -97,16 +125,12 @@ class Product(models.Model):
     A stockable item, identified by a unique SKU.
 
     low_stock_threshold is set per-product by a Manager when the
-    product is created (confirmed decision — NOT a global setting),
-    and can be edited later.
+    product is created, and can be edited later.
     """
 
     sku = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=150)
 
-    # PROTECT on both: a Category/Supplier still referenced by a
-    # Product can't be deleted. Matches `delete: restrict` in the
-    # ER schema for both "classifies" and "supplies".
     category = models.ForeignKey(
         Category, on_delete=models.PROTECT, related_name="products"
     )
@@ -136,16 +160,19 @@ class Inventory(models.Model):
     many-to-many relationship. Each row means "this many units of
     this Product currently sit at this Location."
 
-    The (product, location) pair can only appear once — enforced
-    below exactly as called for in the architecture doc, section 15.
+    IMPORTANT — ZERO-QUANTITY RULE: an Inventory row represents
+    CURRENT physical stock. Once a stock-changing operation brings a
+    row's quantity down to exactly 0, that row is deleted (handled
+    in services.py, not here — this model doesn't enforce it itself
+    since Django model-level hooks are the wrong layer for a rule
+    that depends on which operation is running). The permanent
+    history of that stock reaching zero lives in AuditLog, which is
+    intentionally independent of this row's lifetime.
+
+    The (product, location) pair can only appear once.
 
     PROTECT on both FKs: you cannot delete a Product or a Location
-    while an Inventory row still references it. This is what should
-    power the "This location cannot be deleted because it currently
-    contains inventory" message from the architecture doc's
-    error-handling examples — Django raises ProtectedError here,
-    which the service/view layer can catch and turn into that
-    friendly message later.
+    while an Inventory row still references it.
     """
 
     product = models.ForeignKey(
@@ -174,15 +201,15 @@ class StockAdjustmentRequest(models.Model):
     """
     A Staff-submitted request to correct a stock discrepancy at a
     specific Location. Sits at PENDING until a Manager approves or
-    rejects it. Confirmed workflow: rejection does NOT require a
-    reason on the manager's side.
+    rejects it.
+
+    Per the confirmed business rule, this targets EXISTING physical
+    stock positions only — services.py enforces that an Inventory
+    row already exists for (product, location) before this request
+    can even be created, and again before it can be approved.
     """
 
     class Status(models.TextChoices):
-        # TextChoices (not a plain tuple) so we get
-        # StockAdjustmentRequest.Status.PENDING instead of typing
-        # the raw string "PENDING" everywhere — same pattern
-        # accounts/models.py already uses for User.Role.
         PENDING = "PENDING", "Pending"
         APPROVED = "APPROVED", "Approved"
         REJECTED = "REJECTED", "Rejected"
@@ -197,10 +224,6 @@ class StockAdjustmentRequest(models.Model):
         help_text="Target bin where the discrepancy was found.",
     )
 
-    # staff and manager both point at the same User model, so each
-    # needs its own related_name — otherwise Django can't tell
-    # "user.submitted_adjustments" apart from "user.reviewed_adjustments"
-    # and throws a reverse-accessor clash at startup.
     staff = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -240,25 +263,20 @@ class AuditLog(models.Model):
     An immutable historical record of every inventory-affecting
     operation (receive, dispatch, adjustment approval).
 
-    IMPORTANT DESIGN NOTE: product_sku and location_info are plain
-    text SNAPSHOTS, not ForeignKeys — this is deliberate, straight
-    from the ER schema. An audit record should keep showing exactly
-    what the SKU / location string looked like at the moment the
-    transaction happened, even if the real Product gets renamed or
-    the Location gets restructured later. Don't "fix" these into
-    ForeignKeys without discussing it first — that would quietly
-    break the audit trail's whole purpose.
+    product_sku and location_info are plain text SNAPSHOTS, not
+    ForeignKeys — deliberate, straight from the ER schema. An audit
+    record should keep showing exactly what the SKU / location
+    looked like at the moment the transaction happened, even after
+    the corresponding Inventory row is later deleted under the
+    zero-quantity rule, or if the real Product/Location record
+    changes. Don't "fix" these into ForeignKeys without discussing
+    it first — that would quietly break the audit trail's purpose.
 
-    FLAGGED CONFLICT — needs your confirmation before you migrate:
-    The ER doc (WareFlow__ER.pdf / DBML) states `delete: restrict`
-    for AuditLog.user_id, which is what's implemented below
-    (PROTECT — a User can't be deleted while they have audit
-    history). A note carried over from an earlier session claimed
-    this should be SET NULL instead ("preserve history"), which
-    contradicts the ER doc. I went with the ER doc's literal value
-    since it's the authoritative schema document, but this is a
-    one-line change if SET NULL is actually what you want — just
-    confirm which is correct.
+    FLAGGED CONFLICT (unchanged from last session, still unresolved):
+    The ER doc states `delete: restrict` for AuditLog.user_id
+    (implemented below as PROTECT). An earlier session note claimed
+    SET NULL instead. Still needs your confirmation — not part of
+    this round of changes.
     """
 
     class ActionType(models.TextChoices):
@@ -268,7 +286,6 @@ class AuditLog(models.Model):
 
     timestamp = models.DateTimeField(auto_now_add=True)
 
-    # See "FLAGGED CONFLICT" note above before running migrations.
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="audit_logs"
     )
@@ -276,7 +293,7 @@ class AuditLog(models.Model):
     action_type = models.CharField(max_length=10, choices=ActionType.choices)
     product_sku = models.CharField(max_length=50)
     location_info = models.CharField(
-        max_length=100, help_text="Snapshot string of Zone-Rack-Bin."
+        max_length=100, help_text="Snapshot string, e.g. 'A-R01-B01'."
     )
     quantity_shift = models.IntegerField(
         help_text="Signed change, e.g. +42 for inbound, -18 for outbound."

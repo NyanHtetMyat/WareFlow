@@ -1,0 +1,97 @@
+{% extends "layouts/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Adjustment Requests — WareFlow{% endblock %}
+
+{% block dashboard_content %}
+<div class="form-page-header">
+    <div class="form-page-heading">
+        <div class="form-page-icon form-page-icon--adjustment">
+            <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
+        </div>
+        <div>
+            <h1 class="form-page-title">Adjustment Requests</h1>
+            <p class="form-page-subtitle">Review and act on Staff-submitted stock corrections</p>
+        </div>
+    </div>
+
+    <span class="status-badge status-badge--pending">
+        <i class="bi bi-hourglass-split" aria-hidden="true"></i>
+        {{ pending_requests|length }} Pending
+    </span>
+</div>
+
+{% if pending_requests %}
+<div class="review-grid">
+    {% for req in pending_requests %}
+    <div class="review-card">
+        <div class="review-card-header">
+            <div>
+                <div class="review-card-product">{{ req.product.name }}</div>
+                <div class="review-card-sku">{{ req.product.sku }}</div>
+            </div>
+            <span class="quantity-change-badge {% if req.quantity_change >= 0 %}quantity-change-badge--increase{% else %}quantity-change-badge--decrease{% endif %}">
+                <i class="bi {% if req.quantity_change >= 0 %}bi-arrow-up-circle{% else %}bi-arrow-down-circle{% endif %}" aria-hidden="true"></i>
+                {% if req.quantity_change > 0 %}+{% endif %}{{ req.quantity_change }}
+            </span>
+        </div>
+
+        <div class="review-card-meta">
+            <span class="review-card-meta-item"><i class="bi bi-geo-alt" aria-hidden="true"></i> {{ req.location }}</span>
+            <span class="review-card-meta-item"><i class="bi bi-clock" aria-hidden="true"></i> {{ req.created_at|date:"M d, Y g:i A" }}</span>
+        </div>
+
+        <div class="review-card-reason">{{ req.reason }}</div>
+
+        <div class="review-card-footer">
+            <span class="review-card-submitter">
+                <i class="bi bi-person" aria-hidden="true"></i> {{ req.staff.username }}
+            </span>
+            <div class="review-card-actions">
+                <button type="button" class="btn btn-sm btn-reject"
+                        data-adjustment-action="reject"
+                        data-action-url="{% url 'warehouse:reject_adjustment_request' req.pk %}"
+                        data-product-label="{{ req.product.sku }}">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i> Reject
+                </button>
+                <button type="button" class="btn btn-sm btn-approve"
+                        data-adjustment-action="approve"
+                        data-action-url="{% url 'warehouse:approve_adjustment_request' req.pk %}"
+                        data-product-label="{{ req.product.sku }}">
+                    <i class="bi bi-check-lg" aria-hidden="true"></i> Approve
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+    {% include "components/empty_state.html" with icon="bi-inbox" title="No pending requests" subtitle="New adjustment requests from Staff will show up here." %}
+{% endif %}
+
+<!-- Shared confirmation modal for both Approve and Reject actions -->
+<div class="modal fade" id="adjustmentConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="adjustmentConfirmForm">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="adjustmentConfirmTitle">Confirm Action</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="adjustmentConfirmBody">
+                    Are you sure?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-approve" id="adjustmentConfirmButton">Confirm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/adjustments.js' %}"></script>
+{% endblock %}

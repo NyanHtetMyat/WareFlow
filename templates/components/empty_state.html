@@ -1,0 +1,9 @@
+{% comment %}
+  Generic reusable empty state. Usage:
+  {% include "components/empty_state.html" with icon="bi-inbox" title="Nothing here" subtitle="Optional detail text." %}
+{% endcomment %}
+<div class="empty-state">
+    <i class="bi {{ icon|default:'bi-inbox' }}" aria-hidden="true"></i>
+    <p class="empty-state-title">{{ title|default:"Nothing here yet" }}</p>
+    {% if subtitle %}<p class="empty-state-subtitle">{{ subtitle }}</p>{% endif %}
+</div>

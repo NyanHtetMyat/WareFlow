@@ -328,3 +328,197 @@
         display: none;
     }
 }
+
+/* ═══════════════════ STATUS BADGES ═══════════════════ */
+/* Generic lifecycle-status pill. Reused wherever a record has a
+   PENDING/APPROVED/REJECTED-style state — adjustment requests now,
+   audit logs or anything similar later. */
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.status-badge--pending {
+    background-color: rgba(232, 135, 30, 0.12);
+    color: #B5610E;
+}
+
+.status-badge--approved {
+    background-color: rgba(47, 158, 99, 0.12);
+    color: var(--color-success);
+}
+
+.status-badge--rejected {
+    background-color: rgba(214, 69, 69, 0.12);
+    color: var(--color-danger);
+}
+
+/* ═══════════════════ QUANTITY CHANGE BADGE ═══════════════════ */
+/* Shows a signed adjustment amount with direction-coded color.
+   Used on both the Staff submission page and the Manager review
+   cards, so it lives here in components.css rather than forms.css. */
+
+.quantity-change-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.quantity-change-badge--increase {
+    background-color: rgba(47, 158, 99, 0.12);
+    color: var(--color-success);
+}
+
+.quantity-change-badge--decrease {
+    background-color: rgba(214, 69, 69, 0.12);
+    color: var(--color-danger);
+}
+
+/* ═══════════════════ ADJUSTMENT REVIEW CARDS ═══════════════════ */
+/* Manager's review queue. Cards instead of a table on purpose: the
+   "reason" text varies wildly in length between requests, and a
+   table forces every row to share one row height — either clipping
+   long reasons or leaving empty gaps next to short ones. Cards let
+   each request size itself independently based on its own content. */
+
+.review-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: var(--space-lg);
+}
+
+.review-card {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-top: 4px solid var(--color-adjustment);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-lg);
+}
+
+.review-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+}
+
+.review-card-product {
+    font-weight: 600;
+    color: var(--color-text);
+    font-size: 1.05rem;
+}
+
+.review-card-sku {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    font-family: 'Courier New', monospace;
+}
+
+.review-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+
+.review-card-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.review-card-reason {
+    flex-grow: 1;
+    background-color: var(--color-bg);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    font-size: 0.9rem;
+    color: var(--color-text);
+    margin-bottom: var(--space-md);
+    /* Deliberately no max-height or truncation — the entire point of
+       using cards over a table is letting this grow to fit its
+       content instead of clipping or leaving dead space. */
+}
+
+.review-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--color-border);
+}
+
+.review-card-submitter {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+.review-card-actions {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.btn-approve {
+    background-color: var(--color-success);
+    border-color: var(--color-success);
+    color: var(--color-text-inverse);
+}
+.btn-approve:hover {
+    background-color: #268354;
+    border-color: #268354;
+    color: var(--color-text-inverse);
+}
+
+.btn-reject {
+    background-color: transparent;
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+.btn-reject:hover {
+    background-color: var(--color-danger);
+    color: var(--color-text-inverse);
+}
+
+/* ═══════════════════ EMPTY STATE ═══════════════════ */
+
+.empty-state {
+    text-align: center;
+    padding: var(--space-xl) var(--space-lg);
+    color: var(--color-text-muted);
+}
+
+.empty-state i {
+    display: block;
+    font-size: 2.5rem;
+    color: var(--color-border);
+    margin-bottom: var(--space-md);
+}
+
+.empty-state-title {
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: var(--space-xs);
+}
+
+.empty-state-subtitle {
+    font-size: 0.9rem;
+    margin: 0;
+}
