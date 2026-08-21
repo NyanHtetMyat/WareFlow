@@ -66,6 +66,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var option = document.createElement('option');
             option.value = loc.id;
             option.textContent = loc.label + ' — ' + loc.quantity + ' in stock';
+            option.dataset.quantity = loc.quantity; // read by adjustments.js to cap decrease requests
             locationSelect.appendChild(option);
         });
         locationSelect.disabled = false;

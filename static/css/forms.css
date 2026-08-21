@@ -64,25 +64,23 @@
 /* Read-only date shown as an information chip beside the title,
    rather than as a greyed-out input row inside the form itself. */
 .date-badge {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: var(--space-sm);
     padding: 0.5rem var(--space-md);
-    background-color: var(--color-bg);
+    /* Was --color-bg, same grey as .main's own background — the
+       badge blended into the page instead of standing out.
+       --color-surface (white) reads as a distinct floating chip. */
+    background-color: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     color: var(--color-text-muted);
     font-size: 0.9rem;
     font-weight: 500;
-}
-
-.date-badge input {
-    /* Strips Bootstrap's default input styling (border, background,
-       padding, forced width:100%) so the disabled date field reads
-       as plain text inside the badge, not a nested input box. */
-    all: unset;
-    color: inherit;
-    font: inherit;
+    /* inline-flex (not flex) so the badge shrinks to fit its
+       content instead of stretching — this was the other half of
+       the "extra blank space" problem. */
+    width: fit-content;
 }
 
 /* ═══════════════════ FORM PAGE CENTERING ═══════════════════ */
@@ -272,6 +270,30 @@ input#direction-decrease:checked + .direction-option--decrease {
     font-size: 0.8rem;
     color: var(--color-text-muted);
     margin-top: 0.25rem;
+}
+
+/* ═══════════════════ REASON TEXTAREA ═══════════════════ */
+/* Fixed height, no manual resize handle — if typed content exceeds
+   the box, the textarea gets its own internal scrollbar
+   automatically (this is default textarea behavior once resize is
+   disabled; no extra overflow rule needed). */
+
+#id_reason {
+    resize: none;
+}
+
+/* ═══════════════════ DATE BADGE FIXES ═══════════════════ */
+/* Some browsers apply a UA-level grey background to disabled
+   inputs that "all: unset" alone doesn't fully clear — these two
+   extra properties close that gap explicitly. */
+
+.date-badge-label {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.date-badge-value {
+    color: var(--color-text-muted);
 }
 
 /* ═══════════════════ RECENT REQUESTS (Staff's own history) ═══════════════════ */

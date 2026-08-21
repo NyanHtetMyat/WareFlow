@@ -5,11 +5,14 @@
  *
  *   1. Staff submission form — combines the Increase/Decrease
  *      toggle and a positive magnitude number into the single
- *      signed integer the backend expects, and runs a live
- *      character counter on the Reason field.
+ *      signed integer the backend expects, runs a live character
+ *      counter on the Reason field, and blocks submission client-
+ *      side if a Decrease would exceed the selected location's
+ *      current stock (services.submit_adjustment_request() still
+ *      enforces this authoritatively — this is a UX convenience so
+ *      Staff never even reach a Manager with an impossible request).
  *   2. Manager review page — powers one shared confirmation modal
- *      for both Approve and Reject, so every card's buttons reuse
- *      the same modal instead of needing one per card.
+ *      for both Approve and Reject.
  */
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -17,6 +20,16 @@ document.addEventListener('DOMContentLoaded', function () {
     var hiddenQuantity = document.getElementById('id_quantity_change');
     var magnitudeInput = document.getElementById('id_magnitude');
     var previewBadge = document.getElementById('quantity-preview');
+    var locationSelect = document.getElementById('id_location');
+    var magnitudeWarning = document.getElementById('magnitude-warning');
+    var submitButton = document.getElementById('adjustment-submit-button');
+
+    function getAvailableQuantity() {
+        if (!locationSelect) return null;
+        var selected = locationSelect.options[locationSelect.selectedIndex];
+        if (!selected || selected.dataset.quantity === undefined) return null;
+        return parseInt(selected.dataset.quantity, 10);
+    }
 
     function syncQuantityChange() {
         if (!hiddenQuantity || !magnitudeInput) return;
@@ -33,6 +46,27 @@ document.addEventListener('DOMContentLoaded', function () {
             previewBadge.classList.toggle('quantity-change-badge--increase', signedValue >= 0);
             previewBadge.classList.toggle('quantity-change-badge--decrease', signedValue < 0);
         }
+
+        // ── Cap decrease requests at the selected location's current stock ──
+        var availableQty = getAvailableQuantity();
+        var exceedsStock = isDecrease && availableQty !== null && magnitude > availableQty;
+
+        if (magnitudeInput) {
+            magnitudeInput.max = (isDecrease && availableQty !== null) ? availableQty : '';
+        }
+
+        if (magnitudeWarning) {
+            if (exceedsStock) {
+                magnitudeWarning.textContent = 'Only ' + availableQty + ' units available at this location.';
+                magnitudeWarning.classList.remove('d-none');
+            } else {
+                magnitudeWarning.classList.add('d-none');
+            }
+        }
+
+        if (submitButton) {
+            submitButton.disabled = exceedsStock;
+        }
     }
 
     if (magnitudeInput) {
@@ -40,7 +74,12 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('input[name="adjustment_direction"]').forEach(function (radio) {
             radio.addEventListener('change', syncQuantityChange);
         });
-        syncQuantityChange(); // set the initial value on page load
+        if (locationSelect) {
+            // Re-check the cap whenever the Location changes, since each
+            // location can have a different quantity for the same product.
+            locationSelect.addEventListener('change', syncQuantityChange);
+        }
+        syncQuantityChange(); // set the initial value/state on page load
     }
 
     // ── Live character counter for the Reason textarea ──────────────────
@@ -66,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         document.querySelectorAll('[data-adjustment-action]').forEach(function (button) {
             button.addEventListener('click', function () {
-                var action = button.getAttribute('data-adjustment-action'); // "approve" | "reject"
+                var action = button.getAttribute('data-adjustment-action');
                 var productLabel = button.getAttribute('data-product-label');
 
                 confirmForm.action = button.getAttribute('data-action-url');

@@ -17,7 +17,16 @@
 
     <div class="date-badge">
         <i class="bi bi-calendar3" aria-hidden="true"></i>
-        {{ form.date }}
+        <span class="date-badge-label">Today :</span>
+        {% comment %} 
+            Plain text instead of {{ form.date }} — rendering the real
+            [input type="date"] reserved fixed native chrome width
+            regardless of CSS, which was the source of the blank
+            space. The form field itself still exists in forms.py
+            (disabled, unread server-side); this just stops it from
+            being drawn as an actual input element. 
+        {% endcomment %}
+        <span class="date-badge-value">{{ form.date.value|date:"d-M-Y" }}</span>
     </div>
 </div>
 

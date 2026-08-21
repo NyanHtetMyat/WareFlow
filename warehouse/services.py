@@ -181,12 +181,14 @@ def submit_adjustment_request(product, location, staff_user, quantity_change, re
     Manager to review later.
 
     Per the confirmed business rule, adjustments correct EXISTING
-    physical stock positions only — they are not a hidden
-    replacement for Receive/Inbound. The Product dropdown on the
-    form is already filtered to only offer currently-stocked
-    products (see forms.py), but that's a UI convenience only — this
-    check here is the actual backend enforcement of the same rule,
-    independent of whatever the form happened to show.
+    physical stock positions only. This also now rejects a decrease
+    request outright if it would take Inventory negative, using the
+    CURRENT quantity at request time — this is a UX convenience, not
+    a database integrity requirement (approve_adjustment() already
+    guards against negative stock independently, since the real
+    quantity can still drift between submission and approval). The
+    goal here is simply to stop a request Staff already knows can't
+    be approved from reaching the Manager's queue at all.
     """
     if not reason or not reason.strip():
         raise ValidationError("A reason is required when submitting an adjustment request.")
@@ -194,10 +196,18 @@ def submit_adjustment_request(product, location, staff_user, quantity_change, re
     if quantity_change == 0:
         raise ValidationError("Quantity change cannot be zero.")
 
-    if not Inventory.objects.filter(product=product, location=location).exists():
+    try:
+        inventory = Inventory.objects.get(product=product, location=location)
+    except Inventory.DoesNotExist:
         raise ValidationError(
             "No existing inventory found for this product at this location. "
             "Use Receive Goods if this product has just arrived."
+        )
+
+    if quantity_change < 0 and inventory.quantity + quantity_change < 0:
+        raise ValidationError(
+            f"This decrease would exceed the available stock "
+            f"({inventory.quantity} units currently at this location)."
         )
 
     return StockAdjustmentRequest.objects.create(

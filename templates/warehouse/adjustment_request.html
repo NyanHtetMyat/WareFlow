@@ -23,16 +23,23 @@
         <div class="row">
             <div class="col-md-6">
                 <div class="form-field">
-                    <label for="{{ form.product.id_for_label }}" class="form-field-label">
+                    <label for="id_product" class="form-field-label">
                         <i class="bi bi-upc-scan" aria-hidden="true"></i> Product (SKU)
                     </label>
-                    {% comment %} 
-                        Only products with existing stock are offered — an
-                        adjustment corrects existing inventory, it isn't a
-                        substitute for Receive Goods. See
-                        StockAdjustmentRequestForm.__init__ in forms.py. 
+                    {% comment %}
+                        Rendered manually (not {{ form.product }}) so this
+                        always shows the placeholder after a validation
+                        error instead of re-selecting the previously
+                        submitted product — matches the same manual pattern
+                        Receive/Dispatch already use, and Location already
+                        behaves this way for the same reason. 
                     {% endcomment %}
-                    {{ form.product }}
+                    <select name="product" id="id_product" class="form-select" required>
+                        <option value="">---------</option>
+                        {% for product in form.fields.product.queryset %}
+                            <option value="{{ product.pk }}">{{ product.sku }} — {{ product.name }}</option>
+                        {% endfor %}
+                    </select>
                     {% if form.product.errors %}
                         <div class="text-danger small mt-1">{{ form.product.errors }}</div>
                     {% endif %}
@@ -78,6 +85,7 @@
             </div>
 
             {{ form.quantity_change }}
+            <div class="text-danger small mt-1 d-none" id="magnitude-warning"></div>
             {% if form.quantity_change.errors %}
                 <div class="text-danger small mt-1">{{ form.quantity_change.errors }}</div>
             {% endif %}
@@ -97,7 +105,7 @@
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-adjustment">
+            <button type="submit" class="btn btn-adjustment" id="adjustment-submit-button">
                 <i class="bi bi-send-check" aria-hidden="true"></i> Submit Request
             </button>
         </div>
