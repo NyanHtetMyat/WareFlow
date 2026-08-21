@@ -85,6 +85,20 @@
     font: inherit;
 }
 
+/* ═══════════════════ FORM PAGE CENTERING ═══════════════════ */
+/* Centers form pages specifically — the header, the form card
+   itself, and the "Recent Requests" panel underneath it — WITHOUT
+   touching .main generally. Future pages that use .main for
+   full-width content (an Inventory table, a KPI dashboard grid)
+   should stay left-aligned/full-width, so this centering is scoped
+   to only these three classes rather than applied to .main itself. */
+
+.form-card,
+.recent-requests {
+    max-width: 720px;
+    margin-inline: auto;
+}
+
 /* ═══════════════════ FORM CARD ═══════════════════ */
 
 .form-card {

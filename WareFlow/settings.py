@@ -7,6 +7,7 @@ Never hardcode secrets directly in this file.
 
 from pathlib import Path
 from dotenv import load_dotenv
+from django.contrib.messages import constants as message_constants
 import os
 
 # ── Load environment variables from .env ─────────────────────────────────────
@@ -187,3 +188,18 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Uses auto-incrementing integers as PKs (matches DBML schema)
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# MESSAGE TAGS
+# ════════════════════════════════════════════════════════════════════════════
+
+# Django's messages framework tags messages.error() as "error" by default,
+# but Bootstrap has no .alert-error class (only .alert-danger) — without
+# this remapping, every error message rendered transparent/unstyled since
+# "alert alert-error" matched no CSS rule. success/warning/info already
+# line up with Bootstrap's class names natively, so only ERROR needs
+# remapping here.
+MESSAGE_TAGS = {
+    message_constants.ERROR: 'danger',
+}

@@ -106,7 +106,10 @@
 
 {% if recent_requests %}
 <div class="recent-requests">
-    <h2 class="recent-requests-title">Your Recent Requests</h2>
+    <h2 class="recent-requests-title d-flex align-items-center gap-2">
+        <i class="bi bi-clock-history fs-4"></i>
+        Your Recent Requests 
+    </h2>
     <div class="recent-requests-list">
         {% for req in recent_requests %}
         <div class="recent-request-item">

@@ -5,6 +5,18 @@
  * header, and main content area, arranged with CSS Grid.
  */
 
+/* Locks the whole authenticated shell to exactly the viewport
+   height so the BROWSER never gets a scrollbar of its own — only
+   .main (below) scrolls internally when its content overflows.
+   Scoped to body.dashboard-page specifically so the login page
+   (auth-page) is unaffected and can scroll normally if it ever
+   needs to. */
+body.dashboard-page {
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+}
+
 .dashboard-layout {
     display: grid;
     grid-template-areas:
@@ -12,7 +24,13 @@
         "sidebar main";
     grid-template-columns: var(--sidebar-width-expanded) 1fr;
     grid-template-rows: var(--header-height) 1fr;
-    min-height: 100vh;
+
+    /* Fixed height (not min-height) is the actual fix: min-height
+       only sets a floor, so overflowing .main content used to grow
+       this whole container past the viewport instead of scrolling
+       internally. A fixed height means this row can never grow —
+       .main's own overflow-y: auto below is what has to give. */
+    height: 100vh;
 }
 
 .sidebar {
@@ -23,7 +41,13 @@
     flex-direction: column;
 
     /* Required so hovered nav labels (position: absolute) can float
-       outside the sidebar's own box instead of being clipped. */
+       outside the sidebar's own box instead of being clipped.
+       NOTE: if the nav item list ever grows long enough to exceed
+       viewport height, this will need its own scroll handling —
+       not addressed here since two-axis overflow (scroll
+       vertically, stay visible horizontally for the hover reveal)
+       needs care to avoid clipping the label overlay. Flag this if
+       the sidebar nav list grows much longer. */
     overflow: visible;
 }
 
@@ -41,6 +65,10 @@
     grid-area: main;
     background-color: var(--color-bg);
     padding: var(--space-lg);
+
+    /* This is what actually scrolls now that .dashboard-layout has
+       a fixed (not minimum) height — overflowing content stays
+       contained within this element's own box. */
     overflow-y: auto;
 }
 
