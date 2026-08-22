@@ -361,6 +361,15 @@
     color: var(--color-danger);
 }
 
+.status-badge--warning {
+    /* Deliberately a distinct yellow, not the same amber used for
+       PENDING elsewhere — those are two different concepts
+       (awaiting review vs. a stock-level warning) and shouldn't
+       share one color just because both are "in the warm family." */
+    background-color: rgba(234, 178, 8, 0.25);
+    color: #92700B;
+}
+
 /* ═══════════════════ QUANTITY CHANGE BADGE ═══════════════════ */
 /* Shows a signed adjustment amount with direction-coded color.
    Used on both the Staff submission page and the Manager review
@@ -542,7 +551,7 @@
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-    padding: var(--space-lg);
+    padding: var(--space-md);
     box-shadow: var(--shadow-sm);
 }
 
@@ -595,18 +604,34 @@
     gap: var(--space-md);
 }
 
+/* Search grows to fill remaining space; everything else below gets
+   a fixed-ish width instead of Bootstrap's default 100%, which was
+   forcing every control onto its own row. On narrow screens,
+   flex-wrap alone (no JS) lets these naturally drop to multiple
+   rows — no separate "mobile collapsed" state needed. */
 .search-input-group {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
-    flex: 1 1 240px;
+    flex: 1 1 220px;
+    min-width: 180px;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    padding: 0.45rem var(--space-md);
+}
+
+.list-filter-form select.form-select {
+    width: auto;
+    flex: 0 1 190px;
+    min-width: 150px;
+}
+
+.filter-toggle,
+.list-filter-form .btn {
+    flex-shrink: 0;
 }
 
 .search-input-group i {
     color: var(--color-text-muted);
+    padding: 0 0.75rem 0 0.75rem;
 }
 
 .search-input-group input {

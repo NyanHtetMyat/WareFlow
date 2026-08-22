@@ -29,14 +29,24 @@
 .wf-table thead th {
     text-align: left;
     padding: var(--space-md) var(--space-lg);
-    background-color: var(--color-bg);
-    color: var(--color-text-muted);
+    /* Was --color-bg, the same grey as the page background — the
+       header didn't read as important. Primary navy ties it back
+       to the sidebar's own brand color instead of introducing a
+       new one, and gives the table the visual weight it should
+       have as the page's main focus. */
+    background-color: var(--color-primary);
+    color: var(--color-text-inverse);
     font-size: 0.78rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: none;
     white-space: nowrap;
+}
+
+.wf-table thead th i {
+    margin-right: 0.35rem;
+    opacity: 0.85;
 }
 
 .wf-table tbody td {

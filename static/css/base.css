@@ -1,0 +1,24 @@
+/*
+ * base.css
+ * ─────────────────────────────────────────────
+ * Global, cross-cutting resets that apply site-wide — not scoped
+ * to any one component or page. First entry: neutralizing the
+ * browser's native autofill styling.
+ */
+
+/* Chrome/Edge paint autofilled inputs with a hardcoded light-blue
+   background that ignores normal CSS background-color rules — the
+   only reliable override is this huge inset box-shadow trick (it
+   visually "paints over" the browser's autofill color with your
+   own), paired with a very long background-color transition delay
+   so the browser's own repaint never becomes visible. This affects
+   every text/email/password input across the whole project, which
+   is why it lives here in base.css rather than in one component's
+   section. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px var(--color-surface) inset !important;
+    -webkit-text-fill-color: var(--color-text) !important;
+    transition: background-color 5000s ease-in-out 0s;
+}

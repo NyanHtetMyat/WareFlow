@@ -64,12 +64,12 @@
         <table class="wf-table">
             <thead>
                 <tr>
-                    <th>Product</th>
-                    <th>Category</th>
-                    <th>Location</th>
-                    <th class="text-end">Quantity Here</th>
-                    <th class="text-end">Total Stock</th>
-                    <th>Status</th>
+                    <th><i class="bi bi-upc-scan" aria-hidden="true"></i> Product</th>
+                    <th><i class="bi bi-bookmark" aria-hidden="true"></i> Category</th>
+                    <th><i class="bi bi-geo-alt" aria-hidden="true"></i> Location</th>
+                    <th class="text-end"><i class="bi bi-boxes" aria-hidden="true"></i> Quantity Here</th>
+                    <th class="text-end"><i class="bi bi-stack" aria-hidden="true"></i> Total Stock</th>
+                    <th><i class="bi bi-flag" aria-hidden="true"></i> Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -80,12 +80,12 @@
                         <div class="wf-table-product-sku">{{ row.product.sku }}</div>
                     </td>
                     <td>{{ row.product.category.name }}</td>
-                    <td><span class="location-chip"><i class="bi bi-geo-alt" aria-hidden="true"></i> {{ row.location }}</span></td>
+                    <td><span class="location-chip">{{ row.location }}</span></td>
                     <td class="text-end wf-table-quantity">{{ row.quantity }}</td>
                     <td class="text-end text-muted">{{ row.product_total }}</td>
                     <td>
                         {% if row.is_low_stock %}
-                            <span class="status-badge status-badge--rejected"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Low Stock</span>
+                            <span class="status-badge status-badge--warning"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Low Stock</span>
                         {% else %}
                             <span class="status-badge status-badge--approved"><i class="bi bi-check-circle" aria-hidden="true"></i> OK</span>
                         {% endif %}

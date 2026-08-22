@@ -241,7 +241,7 @@ def inventory_list(request):
         row.product_total = product_totals.get(row.product_id, 0)
         row.is_low_stock = row.product_id in low_stock_product_ids
 
-    paginator = Paginator(inventory_rows, 20)
+    paginator = Paginator(inventory_rows, 10)
     page_obj = paginator.get_page(request.GET.get('page'))
 
     # Preserves search/filter/sort when clicking a pagination link —
