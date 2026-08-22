@@ -1,0 +1,105 @@
+{% extends "layouts/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Inventory — WareFlow{% endblock %}
+
+{% block dashboard_content %}
+<div class="form-page-header">
+    <div class="form-page-heading">
+        <div class="form-page-icon form-page-icon--inventory">
+            <i class="bi bi-boxes" aria-hidden="true"></i>
+        </div>
+        <div>
+            <h1 class="form-page-title">Inventory</h1>
+            <p class="form-page-subtitle">Every product currently in stock, across all locations</p>
+        </div>
+    </div>
+</div>
+
+<div class="stat-grid">
+    {% include "components/stat_card.html" with icon="bi-tags" variant="primary" label="Stocked Products" value=stats.stocked_products %}
+    {% include "components/stat_card.html" with icon="bi-boxes" variant="success" label="Total Units" value=stats.total_units %}
+    {% include "components/stat_card.html" with icon="bi-exclamation-triangle" variant="warning" label="Low Stock Products" value=stats.low_stock_count %}
+    {% include "components/stat_card.html" with icon="bi-geo-alt" variant="adjustment" label="Locations In Use" value=stats.locations_used %}
+</div>
+
+<div class="list-toolbar">
+    <form method="get" class="list-filter-form">
+        <div class="search-input-group">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Search SKU or product name…">
+        </div>
+
+        <select name="category" class="form-select">
+            <option value="">All Categories</option>
+            {% for category in categories %}
+                <option value="{{ category.pk }}" {% if selected_category == category.pk|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="sort" class="form-select">
+            <option value="location" {% if sort == "location" %}selected{% endif %}>Sort: Location</option>
+            <option value="product" {% if sort == "product" %}selected{% endif %}>Sort: Product Name</option>
+            <option value="quantity_desc" {% if sort == "quantity_desc" %}selected{% endif %}>Sort: Quantity (High–Low)</option>
+            <option value="quantity_asc" {% if sort == "quantity_asc" %}selected{% endif %}>Sort: Quantity (Low–High)</option>
+        </select>
+
+        <label class="filter-toggle">
+            <input type="checkbox" name="low_stock" value="1" {% if low_stock_only %}checked{% endif %}>
+            <span><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Low Stock Only</span>
+        </label>
+
+        <button type="submit" class="btn btn-adjustment">
+            <i class="bi bi-funnel" aria-hidden="true"></i> Filter
+        </button>
+        {% if search_query or selected_category or low_stock_only %}
+            <a href="{% url 'warehouse:inventory_list' %}" class="btn btn-outline-secondary">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if page_obj.object_list %}
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="wf-table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Location</th>
+                    <th class="text-end">Quantity Here</th>
+                    <th class="text-end">Total Stock</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in page_obj.object_list %}
+                <tr>
+                    <td>
+                        <div class="wf-table-product-name">{{ row.product.name }}</div>
+                        <div class="wf-table-product-sku">{{ row.product.sku }}</div>
+                    </td>
+                    <td>{{ row.product.category.name }}</td>
+                    <td><span class="location-chip"><i class="bi bi-geo-alt" aria-hidden="true"></i> {{ row.location }}</span></td>
+                    <td class="text-end wf-table-quantity">{{ row.quantity }}</td>
+                    <td class="text-end text-muted">{{ row.product_total }}</td>
+                    <td>
+                        {% if row.is_low_stock %}
+                            <span class="status-badge status-badge--rejected"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Low Stock</span>
+                        {% else %}
+                            <span class="status-badge status-badge--approved"><i class="bi bi-check-circle" aria-hidden="true"></i> OK</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring %}
+
+{% else %}
+    {% include "components/empty_state.html" with icon="bi-inbox" title="No inventory found" subtitle="Try adjusting your search or filters." %}
+{% endif %}
+{% endblock %}

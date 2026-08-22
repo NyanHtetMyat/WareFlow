@@ -1,0 +1,14 @@
+{% comment %}
+  Reusable KPI stat card. Usage:
+  {% include "components/stat_card.html" with icon="bi-boxes" variant="primary" label="Total Units" value=stats.total_units %}
+  variant controls the icon's background color: primary / success / warning / adjustment
+{% endcomment %}
+<div class="stat-card">
+    <div class="stat-card-icon stat-card-icon--{{ variant|default:'primary' }}">
+        <i class="bi {{ icon }}" aria-hidden="true"></i>
+    </div>
+    <div>
+        <div class="stat-card-value">{{ value }}</div>
+        <div class="stat-card-label">{{ label }}</div>
+    </div>
+</div>

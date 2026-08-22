@@ -522,3 +522,125 @@
     font-size: 0.9rem;
     margin: 0;
 }
+
+/* ═══════════════════ STAT CARDS ═══════════════════ */
+/* Reusable KPI cards — Inventory page now, Manager dashboard next.
+   auto-fit + minmax means this reflows from 4 columns down to 1 on
+   small screens with zero media queries needed. */
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.stat-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    font-size: 1.3rem;
+    color: var(--color-text-inverse);
+    flex-shrink: 0;
+}
+
+.stat-card-icon--primary { background-color: var(--color-primary); }
+.stat-card-icon--success { background-color: var(--color-success); }
+.stat-card-icon--warning { background-color: var(--color-accent); }
+.stat-card-icon--adjustment { background-color: var(--color-adjustment); }
+
+.stat-card-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text);
+    line-height: 1.2;
+}
+
+.stat-card-label {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+
+/* ═══════════════════ LIST TOOLBAR (search + filters) ═══════════════════ */
+/* Wraps onto multiple rows on small screens per the confirmed
+   responsive rule for search/filter controls — no media query
+   needed, flex-wrap handles it. */
+
+.list-toolbar {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md) var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+.list-filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.search-input-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex: 1 1 240px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0.45rem var(--space-md);
+}
+
+.search-input-group i {
+    color: var(--color-text-muted);
+}
+
+.search-input-group input {
+    border: none;
+    outline: none;
+    flex: 1;
+    background: transparent;
+}
+
+.filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 0.5rem var(--space-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    user-select: none;
+}
+
+.filter-toggle input {
+    margin: 0;
+}
+
+/* Highlights the toggle's border/text once checked, using :has()
+   so it needs zero JavaScript. Purely cosmetic — the checkbox
+   itself works correctly with or without this rule applying, so a
+   browser without :has() support just shows a plain checked box
+   instead of the highlighted pill. */
+.filter-toggle:has(input:checked) {
+    border-color: var(--color-accent);
+    background-color: rgba(232, 135, 30, 0.08);
+    color: var(--color-accent);
+    font-weight: 600;
+}

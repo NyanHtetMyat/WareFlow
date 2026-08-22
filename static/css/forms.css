@@ -48,6 +48,10 @@
     background-color: var(--color-accent);
 }
 
+.form-page-icon--inventory {
+    background-color: var(--color-primary);
+}
+
 .form-page-title {
     margin: 0;
     font-size: 1.35rem;

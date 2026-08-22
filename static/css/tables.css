@@ -1,0 +1,138 @@
+/*
+ * tables.css
+ * ─────────────────────────────────────────────
+ * Styling for WareFlow's data tables. Inventory is the first page
+ * using this; Products, Suppliers, and Audit Logs will reuse the
+ * same .wf-table classes as they're built, so any tweak here
+ * benefits every future list page for free.
+ *
+ * Works alongside Bootstrap's .table-responsive wrapper for
+ * horizontal scrolling on small screens — per the confirmed
+ * responsive rule, dense tables scroll horizontally rather than
+ * being redesigned into cards on mobile.
+ */
+
+.table-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    margin-bottom: var(--space-lg);
+}
+
+.wf-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.wf-table thead th {
+    text-align: left;
+    padding: var(--space-md) var(--space-lg);
+    background-color: var(--color-bg);
+    color: var(--color-text-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--color-border);
+    white-space: nowrap;
+}
+
+.wf-table tbody td {
+    padding: var(--space-md) var(--space-lg);
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;
+}
+
+.wf-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.wf-table tbody tr:hover {
+    background-color: var(--color-bg);
+}
+
+.wf-table-product-name {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.wf-table-product-sku {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    font-family: 'Courier New', monospace;
+}
+
+.wf-table-quantity {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--color-text);
+}
+
+.location-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.6rem;
+    background-color: var(--color-bg);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    font-family: 'Courier New', monospace;
+}
+
+/* ═══════════════════ PAGINATION ═══════════════════ */
+
+.pagination-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+}
+
+.pagination-list {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: var(--space-xs);
+}
+
+.pagination-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 var(--space-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text);
+    text-decoration: none;
+    font-size: 0.9rem;
+    background-color: var(--color-surface);
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.pagination-link:hover {
+    background-color: var(--color-bg);
+}
+
+.pagination-link--active {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-text-inverse);
+    font-weight: 600;
+}
+
+.pagination-link--disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.pagination-summary {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}

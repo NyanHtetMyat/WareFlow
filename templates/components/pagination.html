@@ -1,0 +1,35 @@
+{% comment %}
+  Reusable pagination control. Usage:
+  {% include "components/pagination.html" with page_obj=page_obj querystring=querystring %}
+  querystring should be the current GET params with "page" removed
+  (see inventory_list view for how it's built), so filters survive
+  page navigation.
+{% endcomment %}
+{% if page_obj.paginator.num_pages > 1 %}
+<nav class="pagination-nav" aria-label="Pagination">
+    <ul class="pagination-list">
+        {% if page_obj.has_previous %}
+            <li><a href="?{{ querystring }}{% if querystring %}&{% endif %}page={{ page_obj.previous_page_number }}" class="pagination-link" aria-label="Previous page"><i class="bi bi-chevron-left" aria-hidden="true"></i></a></li>
+        {% else %}
+            <li><span class="pagination-link pagination-link--disabled"><i class="bi bi-chevron-left" aria-hidden="true"></i></span></li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+                <li><span class="pagination-link pagination-link--active">{{ num }}</span></li>
+            {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+                <li><a href="?{{ querystring }}{% if querystring %}&{% endif %}page={{ num }}" class="pagination-link">{{ num }}</a></li>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <li><a href="?{{ querystring }}{% if querystring %}&{% endif %}page={{ page_obj.next_page_number }}" class="pagination-link" aria-label="Next page"><i class="bi bi-chevron-right" aria-hidden="true"></i></a></li>
+        {% else %}
+            <li><span class="pagination-link pagination-link--disabled"><i class="bi bi-chevron-right" aria-hidden="true"></i></span></li>
+        {% endif %}
+    </ul>
+    <div class="pagination-summary">
+        Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+    </div>
+</nav>
+{% endif %}

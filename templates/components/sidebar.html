@@ -85,8 +85,9 @@
         </li>
 
         <li class="nav-item">
-            {# TODO: replace href="#" with {% url 'warehouse:inventory_list' %} #}
-            <a href="#" class="nav-link" title="Inventory">
+            <a href="{% url 'warehouse:inventory_list' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'inventory_list' %}active{% endif %}"
+               title="Inventory">
                 <i class="bi bi-boxes nav-icon" aria-hidden="true"></i>
                 <span class="nav-label">Inventory</span>
             </a>
@@ -104,8 +105,9 @@
     {% elif user.role == "MANAGER" %}
 
         <li class="nav-item">
-            {# TODO: replace href="#" with {% url 'warehouse:inventory_list' %} #}
-            <a href="#" class="nav-link" title="Inventory">
+            <a href="{% url 'warehouse:inventory_list' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'inventory_list' %}active{% endif %}"
+               title="Inventory">
                 <i class="bi bi-boxes nav-icon" aria-hidden="true"></i>
                 <span class="nav-label">Inventory</span>
             </a>
