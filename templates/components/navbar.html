@@ -3,73 +3,73 @@
 NAVBAR — TOP HEADER BAR
 ────────────────────────────────────────────────────────────────
 Included by templates/layouts/dashboard_base.html, inside <header>.
-Sits beside the sidebar on every authenticated page.
 
 WHAT THIS FILE DOES:
-  Left side  -> shows the current page's title.
-  Right side -> shows who's logged in (avatar + name + role badge)
-                with a dropdown containing Logout, as a quick
-                secondary exit point matching the "Staff ▾" /
-                "Manager ▾" pattern from the original dashboard
-                mockups. The sidebar already has a permanent
-                Logout link at the bottom too — this is just a
-                convenience shortcut, not a replacement for it.
+  Left side  -> breadcrumb trail (Section > Current Page). This is
+                the navbar's own distinct purpose — the full page
+                title/icon/subtitle/date still live only in the
+                page-content header block below it, so the title
+                is never shown twice.
+  Right side -> a purely informational "who's logged in" profile
+                chip. No dropdown, no chevron, no click action of
+                any kind. Logout lives only in the sidebar — it is
+                not duplicated here.
 
 ASSUMPTION / PROVISIONAL DESIGN DECISION:
-  Individual views should pass a `page_title` string in their
-  template context, e.g.:
+  "Warehouse" is hardcoded as the breadcrumb's root label rather
+  than passed as a context variable, because every authenticated
+  page right now genuinely belongs to the warehouse app — there's
+  no second section yet to distinguish it from. Once reports/ or
+  audit/ get real pages of their own, turn this into a
+  `breadcrumb_section` context variable (same pattern as
+  `page_title` below) instead of leaving it hardcoded.
 
-      return render(request, 'warehouse/receive_goods.html', {
-          'page_title': 'Receive Goods',
-          ...
-      })
+  `page_title` (already passed by every view) now doubles as the
+  breadcrumb's current-page segment — no new context variable was
+  needed for that part.
 
-  If a view doesn't provide one, this silently falls back to
-  "Dashboard". Keeps this component fully generic (zero
-  page-specific logic lives here) without needing a separate
-  breadcrumb.html or page_header.html built just for a heading.
-  If the project later needs real multi-level breadcrumbs, swap
-  this block out for that component instead.
+  Checked warehouse/urls.py before building this: every current
+  route is a direct child of "Warehouse" (Product/Supplier "Edit"
+  happens via a modal on their list page, not a separate route —
+  no genuine nested page exists yet). If a real nested page is
+  added later, extend this block for that one template rather than
+  building a generic auto-deriving breadcrumb system pre-emptively.
+
+  The Dashboard page itself is treated as the breadcrumb ROOT, not
+  a child of "Warehouse" — showing "Warehouse > Dashboard" would be
+  redundant since "Warehouse" already links there. This shows on
+  templates/accounts/placeholder_dashboard.html, which doesn't pass
+  a page_title, so it falls into the `{% else %}` branch below.
 ────────────────────────────────────────────────────────────────
 {% endcomment %}
 
-<div class="navbar-title">
-    <h1 class="page-title">{{ page_title|default:"Dashboard" }}</h1>
-</div>
+<nav class="breadcrumb-nav" aria-label="Breadcrumb">
+    {% if page_title and page_title != "Dashboard" %}
+        <a href="{% url 'accounts:dashboard_redirect' %}" class="breadcrumb-link">Warehouse</a>
+        <span class="breadcrumb-separator">&gt;</span>
+        <span class="breadcrumb-current">{{ page_title }}</span>
+    {% else %}
+        <span class="breadcrumb-current">Dashboard</span>
+    {% endif %}
+</nav>
 
-<div class="navbar-user dropdown">
-    <button class="navbar-user-toggle" type="button"
-            data-bs-toggle="dropdown" aria-expanded="false">
+<div class="profile-chip">
+    {% comment %}
+        Squircle letter-avatar, colored by role. Purely decorative —
+        no profile picture uploads, not worth the complexity here.
+    {% endcomment %}
+    <span class="profile-avatar profile-avatar--{{ user.role|lower }}" aria-hidden="true">
+        {{ user.username|slice:":1"|upper }}
+    </span>
 
-        {% comment %}
-            Letter-avatar: just the first character of the username,
-            uppercased. Deliberately skips profile picture uploads —
-            not worth the added complexity for an academic project.
-        {% endcomment %}
-        <span class="user-avatar" aria-hidden="true">{{ user.username|slice:":1"|upper }}</span>
-
-        <span class="navbar-user-info">
-            <span class="navbar-username">{{ user.username }}</span>
-
-            {% comment %}
-                Role badge color is driven entirely by CSS classes named
-                after the role (role-badge--staff / --manager / --admin),
-                composed dynamically via the |lower filter. This avoids
-                an {% if %}/{% elif %}/{% endif %} chain here — if a 4th
-                role is ever added, only components.css needs a new
-                rule, this template doesn't need to change at all. 
-            {% endcomment %}
-            <span class="role-badge role-badge--{{ user.role|lower }}">{{ user.get_role_display }}</span>
+    <span class="profile-text">
+        <span class="profile-welcome">Welcome back</span>
+        <span class="profile-name-row">
+            {{ user.username }}
+            <span class="role-tag">
+                <span class="role-dot role-dot--{{ user.role|lower }}" aria-hidden="true"></span>
+                {{ user.get_role_display }}
+            </span>
         </span>
-
-        <i class="bi bi-chevron-down navbar-caret" aria-hidden="true"></i>
-    </button>
-
-    <ul class="dropdown-menu dropdown-menu-end">
-        <li>
-            <a class="dropdown-item" href="{% url 'accounts:logout' %}">
-                <i class="bi bi-box-arrow-left me-2" aria-hidden="true"></i>Logout
-            </a>
-        </li>
-    </ul>
+    </span>
 </div>
