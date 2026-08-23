@@ -130,16 +130,18 @@
         </li>
 
         <li class="nav-item">
-            {# TODO: replace href="#" with {% url 'warehouse:products' %} #}
-            <a href="#" class="nav-link" title="Products">
+            <a href="{% url 'warehouse:product_list' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'product_list' %}active{% endif %}"
+               title="Products">
                 <i class="bi bi-tags nav-icon" aria-hidden="true"></i>
                 <span class="nav-label">Products</span>
             </a>
         </li>
 
         <li class="nav-item">
-            {# TODO: replace href="#" with {% url 'warehouse:suppliers' %} #}
-            <a href="#" class="nav-link" title="Suppliers">
+            <a href="{% url 'warehouse:supplier_list' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'supplier_list' %}active{% endif %}"
+               title="Suppliers">
                 <i class="bi bi-truck nav-icon" aria-hidden="true"></i>
                 <span class="nav-label">Suppliers</span>
             </a>

@@ -11,7 +11,7 @@ from django import forms
 from django.utils import timezone
 
 from . import services
-from .models import Location, Product
+from .models import Location, Product, Supplier
 
 
 class ReceiveGoodsForm(forms.Form):
@@ -56,9 +56,7 @@ class DispatchGoodsForm(forms.Form):
     default, so it's re-fetched fresh on every request rather than
     once at server startup). The Location field's queryset stays
     broad at the Django level; the authoritative Product+Location
-    PAIR check happens in services.dispatch_goods(), exactly as the
-    business rules require — UI filtering (via inventory_chain.js)
-    is for user experience, the backend re-checks regardless.
+    PAIR check happens in services.dispatch_goods().
     """
 
     product = forms.ModelChoiceField(
@@ -122,3 +120,36 @@ class StockAdjustmentRequestForm(forms.Form):
         if value == 0:
             raise forms.ValidationError("Quantity change cannot be zero.")
         return value
+
+
+class ProductForm(forms.ModelForm):
+    """
+    Manager-facing form for creating/editing a Product. Backs the
+    shared Add/Edit modal on the Product Management page — Category
+    and Supplier fields auto-populate their dropdown choices from
+    the model's ForeignKey definitions, so no explicit queryset is
+    needed here the way DispatchGoodsForm needed one.
+    """
+
+    class Meta:
+        model = Product
+        fields = ['sku', 'name', 'category', 'supplier', 'low_stock_threshold']
+        widgets = {
+            'sku': forms.TextInput(attrs={'class': 'form-control'}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
+            'supplier': forms.Select(attrs={'class': 'form-select'}),
+            'low_stock_threshold': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+        }
+
+
+class SupplierForm(forms.ModelForm):
+    """Manager-facing form for creating/editing a Supplier."""
+
+    class Meta:
+        model = Supplier
+        fields = ['name', 'contact_info']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'contact_info': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }

@@ -1,0 +1,117 @@
+{% extends "layouts/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Suppliers — WareFlow{% endblock %}
+
+{% block dashboard_content %}
+<div class="form-page-header">
+    <div class="form-page-heading">
+        <div class="form-page-icon form-page-icon--adjustment">
+            <i class="bi bi-truck" aria-hidden="true"></i>
+        </div>
+        <div>
+            <h1 class="form-page-title">Suppliers</h1>
+            <p class="form-page-subtitle">Manage supplier records</p>
+        </div>
+    </div>
+    <button type="button" class="btn btn-adjustment" id="addRecordButton" data-add-title="Add Supplier">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> Add Supplier
+    </button>
+</div>
+
+<div class="list-toolbar">
+    <form method="get" class="list-filter-form">
+        <div class="search-input-group">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Search supplier name…">
+        </div>
+        <button type="submit" class="btn btn-adjustment">
+            <i class="bi bi-funnel" aria-hidden="true"></i> Filter
+        </button>
+        {% if search_query %}
+            <a href="{% url 'warehouse:supplier_list' %}" class="btn btn-outline-secondary">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if suppliers %}
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="wf-table">
+            <thead>
+                <tr>
+                    <th><i class="bi bi-truck" aria-hidden="true"></i> Supplier Name</th>
+                    <th><i class="bi bi-telephone" aria-hidden="true"></i> Contact Info</th>
+                    <th class="text-end"><i class="bi bi-tags" aria-hidden="true"></i> Products</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for supplier in suppliers %}
+                <tr class="detail-row-trigger" data-pk="{{ supplier.pk }}" data-detail='{{ supplier.detail_json }}' data-edit='{{ supplier.edit_json }}'>
+                    <td class="wf-table-product-name">{{ supplier.name }}</td>
+                    <td class="text-muted">{{ supplier.contact_info|truncatechars:60 }}</td>
+                    <td class="text-end">{{ supplier.product_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+    {% include "components/empty_state.html" with icon="bi-truck" title="No suppliers found" subtitle="Try a different search, or add a new supplier." %}
+{% endif %}
+
+<!-- Detail Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Supplier Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="detailModalBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-adjustment" id="detailEditButton" data-edit-title="Edit Supplier">
+                    <i class="bi bi-pencil" aria-hidden="true"></i> Edit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Shared Add/Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="editModalForm"
+                  data-create-url="{% url 'warehouse:supplier_create' %}"
+                  data-edit-url-template="{% url 'warehouse:supplier_edit' 0 %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalTitle">Add Supplier</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-field">
+                        <label for="modal_name" class="form-field-label"><i class="bi bi-truck" aria-hidden="true"></i> Supplier Name</label>
+                        <input type="text" name="name" id="modal_name" class="form-control" required>
+                    </div>
+                    <div class="form-field">
+                        <label for="modal_contact_info" class="form-field-label"><i class="bi bi-telephone" aria-hidden="true"></i> Contact Info</label>
+                        <textarea name="contact_info" id="modal_contact_info" class="form-control" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-adjustment">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/management_modals.js' %}"></script>
+{% endblock %}

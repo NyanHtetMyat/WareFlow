@@ -146,3 +146,7 @@
     font-size: 0.85rem;
     color: var(--color-text-muted);
 }
+
+.detail-row-trigger {
+    cursor: pointer;
+}
