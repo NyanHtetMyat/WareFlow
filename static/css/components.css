@@ -344,6 +344,8 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.03em;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .status-badge--pending {
@@ -699,4 +701,43 @@
     text-align: right;
     color: var(--color-text);
     word-break: break-word;
+}
+
+/* ═══════════════════ SORT CONTROL ═══════════════════ */
+
+.btn-icon-square {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+/* ═══════════════════ DETAIL MODAL — stacked/list values ═══════════════════ */
+
+.detail-row--stacked {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.detail-row--stacked .detail-value {
+    text-align: left;
+    width: 100%;
+}
+
+.detail-value-list {
+    margin: var(--space-xs) 0 0 0;
+    padding-left: 1.2rem;
+}
+
+.detail-value-list li {
+    margin-bottom: 0.2rem;
+}
+
+/* ═══════════════════ STAT CARD — danger variant ═══════════════════ */
+
+.stat-card-icon--danger {
+    background-color: var(--color-danger);
 }

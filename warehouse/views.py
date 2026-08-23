@@ -28,6 +28,19 @@ from .forms import (
 )
 from .models import Category, Inventory, Product, StockAdjustmentRequest, Supplier
 
+# Shared across Inventory and Product sorting — Status isn't a real
+# database column on either page (it's derived from quantity vs.
+# threshold), so "sort by Status" is resolved to this numeric rank
+# in Python rather than in SQL. Ascending therefore reads
+# OK -> Low Stock -> Out of Stock, matching the confirmed spec.
+STOCK_STATUS_RANK = {'ok': 0, 'low_stock': 1, 'out_of_stock': 2}
+
+STOCK_STATUS_BADGE = {
+    'ok': {'cls': 'status-badge--approved', 'icon': 'bi-check-circle', 'text': 'OK'},
+    'low_stock': {'cls': 'status-badge--warning', 'icon': 'bi-exclamation-triangle', 'text': 'Low Stock'},
+    'out_of_stock': {'cls': 'status-badge--rejected', 'icon': 'bi-x-octagon', 'text': 'Out of Stock'},
+}
+
 
 @login_required
 @staff_required
@@ -188,15 +201,18 @@ def reject_adjustment_request(request, pk):
 @role_required(User.Role.STAFF, User.Role.MANAGER)
 def inventory_list(request):
     """
-    Searchable, filterable, paginated view of every current
-    Inventory row. Read-only for both roles. Since Inventory rows
-    are deleted at zero quantity (see services.py), every row shown
-    here represents genuinely current stock.
+    Searchable, filterable, sortable, paginated view of every
+    current Inventory row. Sorting happens in Python on the fully
+    materialized row list (not via queryset.order_by()) so that
+    "Status" — a derived value, not a real column — can be sorted
+    with exactly the same code path as every other column, rather
+    than needing special-case handling.
     """
     search_query = request.GET.get('q', '').strip()
     category_id = request.GET.get('category', '')
     low_stock_only = request.GET.get('low_stock') == '1'
-    sort = request.GET.get('sort', 'location')
+    sort_field = request.GET.get('sort', 'location')
+    sort_dir = request.GET.get('dir', 'asc')
 
     products_with_totals = Product.objects.annotate(total_quantity=Sum('inventory_records__quantity'))
     product_totals = dict(products_with_totals.values_list('id', 'total_quantity'))
@@ -206,7 +222,11 @@ def inventory_list(request):
         .values_list('id', flat=True)
     )
 
-    inventory_qs = Inventory.objects.select_related('product', 'product__category', 'location')
+    inventory_qs = (
+        Inventory.objects
+        .select_related('product', 'product__category', 'location')
+        .order_by('pk')  # stable base order so Python sort below has deterministic tie-breaking
+    )
 
     if search_query:
         inventory_qs = inventory_qs.filter(
@@ -219,18 +239,23 @@ def inventory_list(request):
     if low_stock_only:
         inventory_qs = inventory_qs.filter(product_id__in=low_stock_product_ids)
 
-    sort_map = {
-        'location': ('location__zone', 'location__rack', 'location__bin'),
-        'product': ('product__name',),
-        'quantity_asc': ('quantity',),
-        'quantity_desc': ('-quantity',),
-    }
-    inventory_qs = inventory_qs.order_by(*sort_map.get(sort, sort_map['location']))
-
     inventory_rows = list(inventory_qs)
     for row in inventory_rows:
         row.product_total = product_totals.get(row.product_id, 0)
         row.is_low_stock = row.product_id in low_stock_product_ids
+        row.status_rank = STOCK_STATUS_RANK['low_stock' if row.is_low_stock else 'ok']
+
+    def sort_key(row):
+        return {
+            'product': row.product.name.lower(),
+            'category': row.product.category.name.lower(),
+            'location': str(row.location),
+            'quantity_here': row.quantity,
+            'total_stock': row.product_total,
+            'status': row.status_rank,
+        }.get(sort_field, str(row.location))
+
+    inventory_rows.sort(key=sort_key, reverse=(sort_dir == 'desc'))
 
     paginator = Paginator(inventory_rows, 10)
     page_obj = paginator.get_page(request.GET.get('page'))
@@ -246,7 +271,8 @@ def inventory_list(request):
         'search_query': search_query,
         'selected_category': category_id,
         'low_stock_only': low_stock_only,
-        'sort': sort,
+        'sort': sort_field,
+        'dir': sort_dir,
         'querystring': querystring,
         'stats': {
             'stocked_products': sum(1 for total in product_totals.values() if total),
@@ -261,25 +287,16 @@ def inventory_list(request):
 @manager_required
 def product_list(request):
     """
-    Manager-only Product Management: view, search/filter, create,
-    and edit Products. Stock status shown per product is DERIVED
-    (never stored) from total Inventory quantity vs.
-    low_stock_threshold, per the confirmed business rule:
-        total >= threshold        -> OK
-        0 < total < threshold     -> LOW STOCK
-        total == 0 (or no rows)   -> OUT OF STOCK
-    A Product with zero Inventory rows anywhere still appears here
-    as Out of Stock — registering a Product doesn't require it to
-    have ever been physically received.
-
-    KPI stats (stocked/out-of-stock counts) are computed from ALL
-    products regardless of the current search/filter, so they read
-    as stable overview numbers rather than shifting with every
-    search keystroke.
+    Manager-only Product Management: view, search/filter/sort,
+    create, and edit Products. Stock status is DERIVED, never
+    stored, computed fresh from total Inventory quantity vs.
+    low_stock_threshold on every request.
     """
     search_query = request.GET.get('q', '').strip()
     category_id = request.GET.get('category', '')
     status_filter = request.GET.get('status', '')
+    sort_field = request.GET.get('sort', 'name')
+    sort_dir = request.GET.get('dir', 'asc')
 
     all_totals = list(
         Product.objects.annotate(total_quantity=Sum('inventory_records__quantity')).values_list('total_quantity', flat=True)
@@ -293,6 +310,7 @@ def product_list(request):
         Product.objects
         .select_related('category', 'supplier')
         .annotate(total_quantity=Sum('inventory_records__quantity'))
+        .order_by('pk')
     )
 
     if search_query:
@@ -301,7 +319,7 @@ def product_list(request):
     if category_id:
         products_qs = products_qs.filter(category_id=category_id)
 
-    products = list(products_qs.order_by('name'))
+    products = list(products_qs)
 
     for product in products:
         total = product.total_quantity or 0
@@ -312,9 +330,6 @@ def product_list(request):
         else:
             product.stock_status = 'ok'
 
-        # JSON blobs consumed by static/js/management_modals.js to
-        # populate the Detail and Edit modals without a server
-        # round-trip per row — the data's already on the page.
         product.detail_json = json.dumps({
             "SKU": product.sku,
             "Product Name": product.name,
@@ -322,7 +337,10 @@ def product_list(request):
             "Supplier": product.supplier.name,
             "Low-Stock Threshold": product.low_stock_threshold,
             "Total Stock": total,
-            "Status": product.stock_status.replace('_', ' ').title(),
+            # A dict (not a plain string) here is a signal to
+            # management_modals.js to render this as a colored
+            # status badge instead of plain text — see STOCK_STATUS_BADGE.
+            "Status": {"__type": "badge", **STOCK_STATUS_BADGE[product.stock_status]},
         })
         product.edit_json = json.dumps({
             "sku": product.sku,
@@ -335,6 +353,18 @@ def product_list(request):
     if status_filter:
         products = [p for p in products if p.stock_status == status_filter]
 
+    def sort_key(p):
+        return {
+            'sku': p.sku.lower(),
+            'name': p.name.lower(),
+            'category': p.category.name.lower(),
+            'supplier': p.supplier.name.lower(),
+            'threshold': p.low_stock_threshold,
+            'status': STOCK_STATUS_RANK[p.stock_status],
+        }.get(sort_field, p.name.lower())
+
+    products.sort(key=sort_key, reverse=(sort_dir == 'desc'))
+
     return render(request, 'warehouse/products.html', {
         'page_title': 'Products',
         'products': products,
@@ -343,6 +373,8 @@ def product_list(request):
         'search_query': search_query,
         'selected_category': category_id,
         'status_filter': status_filter,
+        'sort': sort_field,
+        'dir': sort_dir,
         'stats': stats,
     })
 
@@ -352,9 +384,7 @@ def product_list(request):
 def product_create(request):
     """
     Handles the Add Product modal's POST. Always redirects back to
-    the list — the modal doesn't stay open on failure (see the
-    trade-off noted where this feature was introduced); a failed
-    save surfaces its first error as a toast instead.
+    the list; a failed save surfaces its first error as a toast.
     """
     if request.method == 'POST':
         form = ProductForm(request.POST)
@@ -385,23 +415,31 @@ def product_edit(request, pk):
 @manager_required
 def supplier_list(request):
     """
-    Manager-only Supplier Management: view, search, create, and
-    edit Suppliers. Each row shows how many Products currently
-    reference it — informational only, per the confirmed scope
-    boundary keeping this page focused on Supplier data, not
-    warehouse/inventory metrics.
+    Manager-only Supplier Management: view, search/sort, create,
+    and edit Suppliers. Each row shows how many Products currently
+    reference it.
     """
     search_query = request.GET.get('q', '').strip()
+    sort_field = request.GET.get('sort', 'name')
+    sort_dir = request.GET.get('dir', 'asc')
 
-    suppliers_qs = Supplier.objects.annotate(product_count=Count('products')).prefetch_related('products')
+    suppliers_qs = (
+        Supplier.objects
+        .annotate(product_count=Count('products'))
+        .prefetch_related('products')
+        .order_by('pk')
+    )
 
     if search_query:
         suppliers_qs = suppliers_qs.filter(name__icontains=search_query)
 
-    suppliers = list(suppliers_qs.order_by('name'))
+    suppliers = list(suppliers_qs)
 
     for supplier in suppliers:
-        product_names = ", ".join(p.name for p in supplier.products.all()) or "—"
+        # A plain list (not a joined string) — management_modals.js
+        # renders this as a bulleted list in the detail modal rather
+        # than one long comma-separated line.
+        product_names = list(supplier.products.values_list('name', flat=True))
         supplier.detail_json = json.dumps({
             "Supplier Name": supplier.name,
             "Contact Info": supplier.contact_info,
@@ -412,10 +450,21 @@ def supplier_list(request):
             "contact_info": supplier.contact_info,
         })
 
+    def sort_key(s):
+        return {
+            'name': s.name.lower(),
+            'contact_info': s.contact_info.lower(),
+            'product_count': s.product_count,
+        }.get(sort_field, s.name.lower())
+
+    suppliers.sort(key=sort_key, reverse=(sort_dir == 'desc'))
+
     return render(request, 'warehouse/suppliers.html', {
         'page_title': 'Suppliers',
         'suppliers': suppliers,
         'search_query': search_query,
+        'sort': sort_field,
+        'dir': sort_dir,
     })
 
 

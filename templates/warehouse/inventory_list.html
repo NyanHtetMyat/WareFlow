@@ -38,11 +38,18 @@
         </select>
 
         <select name="sort" class="form-select">
+            <option value="product" {% if sort == "product" %}selected{% endif %}>Sort: Product</option>
+            <option value="category" {% if sort == "category" %}selected{% endif %}>Sort: Category</option>
             <option value="location" {% if sort == "location" %}selected{% endif %}>Sort: Location</option>
-            <option value="product" {% if sort == "product" %}selected{% endif %}>Sort: Product Name</option>
-            <option value="quantity_desc" {% if sort == "quantity_desc" %}selected{% endif %}>Sort: Quantity (High–Low)</option>
-            <option value="quantity_asc" {% if sort == "quantity_asc" %}selected{% endif %}>Sort: Quantity (Low–High)</option>
+            <option value="quantity_here" {% if sort == "quantity_here" %}selected{% endif %}>Sort: Quantity Here</option>
+            <option value="total_stock" {% if sort == "total_stock" %}selected{% endif %}>Sort: Total Stock</option>
+            <option value="status" {% if sort == "status" %}selected{% endif %}>Sort: Status</option>
         </select>
+
+        <input type="hidden" name="dir" id="id_dir" value="{{ dir }}">
+        <button type="button" class="btn btn-outline-secondary btn-icon-square" id="dir-toggle-button">
+            <i class="bi bi-sort-down" aria-hidden="true"></i>
+        </button>
 
         <label class="filter-toggle">
             <input type="checkbox" name="low_stock" value="1" {% if low_stock_only %}checked{% endif %}>
@@ -102,4 +109,8 @@
 {% else %}
     {% include "components/empty_state.html" with icon="bi-inbox" title="No inventory found" subtitle="Try adjusting your search or filters." %}
 {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/sort_toggle.js' %}"></script>
 {% endblock %}

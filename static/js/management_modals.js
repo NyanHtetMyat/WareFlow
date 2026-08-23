@@ -2,25 +2,14 @@
  * management_modals.js
  * ─────────────────────────────────────────────
  * Generic "click a row -> view detail -> Edit -> edit modal" flow,
- * shared by Product Management and Supplier Management pages (and
- * any future management page built the same way — Locations, Users).
+ * shared by Product Management and Supplier Management pages.
  *
- * Expected markup per page:
- *   - Table rows with class "detail-row-trigger", plus
- *     data-pk, data-detail='{...}' (label -> display value, shown
- *     read-only), and data-edit='{...}' (form field name -> value,
- *     used to prefill the edit form).
- *   - #detailModal / #detailModalBody / #detailEditButton
- *     (data-edit-title on the button sets the edit modal's title).
- *   - #editModal / #editModalForm / #editModalTitle. The form
- *     carries data-create-url and data-edit-url-template (the
- *     latter containing a literal "0" placeholder for the pk).
- *   - #addRecordButton (data-add-title) opens the same edit modal
- *     empty, in create mode.
- *
- * One shared edit modal serves both Add and Edit — matches the
- * same shared-modal pattern already used for Approve/Reject on the
- * Adjustment Requests page, rather than introducing a new pattern.
+ * Detail values are normally plain text, but two special shapes
+ * are recognized:
+ *   - {"__type": "badge", "cls": "...", "icon": "...", "text": "..."}
+ *     renders as a colored status-badge instead of plain text.
+ *   - a plain JS array renders as a bulleted list instead of one
+ *     comma-joined line (used for Supplier's Associated Products).
  */
 document.addEventListener('DOMContentLoaded', function () {
     var detailModalEl = document.getElementById('detailModal');
@@ -48,7 +37,32 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Row click -> show read-only Detail modal
+    function renderDetailValue(value) {
+        if (value && typeof value === 'object' && value.__type === 'badge') {
+            var badge = document.createElement('span');
+            badge.className = 'status-badge ' + value.cls;
+            badge.innerHTML = '<i class="bi ' + value.icon + '" aria-hidden="true"></i> ' + value.text;
+            return { el: badge, stacked: false };
+        }
+
+        if (Array.isArray(value)) {
+            if (value.length === 0) {
+                var empty = document.createTextNode('—');
+                return { el: empty, stacked: false };
+            }
+            var list = document.createElement('ul');
+            list.className = 'detail-value-list';
+            value.forEach(function (item) {
+                var li = document.createElement('li');
+                li.textContent = item;
+                list.appendChild(li);
+            });
+            return { el: list, stacked: true };
+        }
+
+        return { el: document.createTextNode(value), stacked: false };
+    }
+
     document.querySelectorAll('.detail-row-trigger').forEach(function (row) {
         row.addEventListener('click', function () {
             var detailData = JSON.parse(row.getAttribute('data-detail'));
@@ -66,7 +80,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 var valueEl = document.createElement('span');
                 valueEl.className = 'detail-value';
-                valueEl.textContent = detailData[label];
+
+                var rendered = renderDetailValue(detailData[label]);
+                valueEl.appendChild(rendered.el);
+                if (rendered.stacked) rowEl.classList.add('detail-row--stacked');
 
                 rowEl.appendChild(labelEl);
                 rowEl.appendChild(valueEl);
@@ -77,10 +94,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Detail modal's "Edit" button -> close detail, THEN open edit.
-    // Waiting for hidden.bs.modal (rather than opening immediately)
-    // avoids Bootstrap's stacked-backdrop glitch when one modal
-    // opens while another is still mid-close.
     if (detailEditButton) {
         detailEditButton.addEventListener('click', function () {
             openEditAfterDetailCloses = true;
@@ -98,7 +111,6 @@ document.addEventListener('DOMContentLoaded', function () {
         editModal.show();
     });
 
-    // "Add" button -> open the same edit modal, empty, in create mode
     var addButton = document.getElementById('addRecordButton');
     if (addButton) {
         addButton.addEventListener('click', function () {

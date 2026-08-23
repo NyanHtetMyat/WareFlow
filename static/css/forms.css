@@ -360,3 +360,10 @@ input#direction-decrease:checked + .direction-option--decrease {
     color: var(--color-primary);
     font-weight: 600;
 }
+
+/* Supplier's Contact Info field in the Add/Edit modal — same
+   fixed-height, internally-scrolling behavior as the Adjustment
+   Request's Reason field. */
+#modal_contact_info {
+    resize: none;
+}
