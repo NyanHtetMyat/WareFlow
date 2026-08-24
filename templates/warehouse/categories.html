@@ -1,0 +1,123 @@
+{% extends "layouts/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Categories — WareFlow{% endblock %}
+
+{% block dashboard_content %}
+<div class="form-page-header">
+    <div class="form-page-heading">
+        <div class="form-page-icon form-page-icon--adjustment">
+            <i class="bi bi-bookmark" aria-hidden="true"></i>
+        </div>
+        <div>
+            <h1 class="form-page-title">Categories</h1>
+            <p class="form-page-subtitle">Manage product categories</p>
+        </div>
+    </div>
+    <button type="button" class="btn btn-adjustment" id="addRecordButton" data-add-title="Add Category">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> Add Category
+    </button>
+</div>
+
+<div class="list-toolbar">
+    <form method="get" class="list-filter-form">
+        <div class="search-input-group">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Search category name…">
+        </div>
+
+        <select name="sort" class="form-select">
+            <option value="name" {% if sort == "name" %}selected{% endif %}>Sort: Category Name</option>
+            <option value="product_count" {% if sort == "product_count" %}selected{% endif %}>Sort: Products</option>
+        </select>
+
+        <input type="hidden" name="dir" id="id_dir" value="{{ dir }}">
+        <button type="button" class="btn btn-outline-secondary btn-icon-square" id="dir-toggle-button">
+            <i class="bi bi-sort-down" aria-hidden="true"></i>
+        </button>
+
+        <button type="submit" class="btn btn-adjustment">
+            <i class="bi bi-funnel" aria-hidden="true"></i> Filter
+        </button>
+        {% if search_query %}
+            <a href="{% url 'warehouse:category_list' %}" class="btn btn-outline-secondary">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if categories %}
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="wf-table">
+            <thead>
+                <tr>
+                    <th><i class="bi bi-bookmark" aria-hidden="true"></i> Category Name</th>
+                    <th class="text-end"><i class="bi bi-tags" aria-hidden="true"></i> Products</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for category in categories %}
+                <tr class="detail-row-trigger" data-pk="{{ category.pk }}" data-detail='{{ category.detail_json }}' data-edit='{{ category.edit_json }}'>
+                    <td class="wf-table-product-name">{{ category.name }}</td>
+                    <td class="text-end">{{ category.product_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+    {% include "components/empty_state.html" with icon="bi-bookmark" title="No categories found" subtitle="Try a different search, or add a new category." %}
+{% endif %}
+
+<!-- Detail Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Category Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="detailModalBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-adjustment" id="detailEditButton" data-edit-title="Edit Category">
+                    <i class="bi bi-pencil" aria-hidden="true"></i> Edit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Shared Add/Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="editModalForm"
+                  data-create-url="{% url 'warehouse:category_create' %}"
+                  data-edit-url-template="{% url 'warehouse:category_edit' 0 %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalTitle">Add Category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-field">
+                        <label for="modal_name" class="form-field-label"><i class="bi bi-bookmark" aria-hidden="true"></i> Category Name</label>
+                        <input type="text" name="name" id="modal_name" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-adjustment">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/sort_toggle.js' %}"></script>
+<script src="{% static 'js/management_modals.js' %}"></script>
+{% endblock %}

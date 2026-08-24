@@ -20,19 +20,16 @@ from accounts.models import User
 
 from . import services
 from .forms import (
+    CategoryForm,
     DispatchGoodsForm,
+    LocationForm,
     ProductForm,
     ReceiveGoodsForm,
     StockAdjustmentRequestForm,
     SupplierForm,
 )
-from .models import Category, Inventory, Product, StockAdjustmentRequest, Supplier
+from .models import Category, Inventory, Location, Product, StockAdjustmentRequest, Supplier
 
-# Shared across Inventory and Product sorting — Status isn't a real
-# database column on either page (it's derived from quantity vs.
-# threshold), so "sort by Status" is resolved to this numeric rank
-# in Python rather than in SQL. Ascending therefore reads
-# OK -> Low Stock -> Out of Stock, matching the confirmed spec.
 STOCK_STATUS_RANK = {'ok': 0, 'low_stock': 1, 'out_of_stock': 2}
 
 STOCK_STATUS_BADGE = {
@@ -47,8 +44,7 @@ STOCK_STATUS_BADGE = {
 def receive_goods(request):
     """
     Staff-only page for recording inbound stock. On success, stays
-    on this page with a fresh empty form so Staff can log several
-    receipts in a row without extra navigation.
+    on this page with a fresh empty form.
     """
     if request.method == 'POST':
         form = ReceiveGoodsForm(request.POST)
@@ -76,10 +72,7 @@ def receive_goods(request):
 @login_required
 @staff_required
 def dispatch_goods(request):
-    """
-    Staff-only page for recording outbound stock. Same pattern as
-    receive_goods — success redirects back to a fresh form.
-    """
+    """Staff-only page for recording outbound stock."""
     if request.method == 'POST':
         form = DispatchGoodsForm(request.POST)
         if form.is_valid():
@@ -107,11 +100,7 @@ def dispatch_goods(request):
 @login_required
 @staff_required
 def submit_adjustment_request(request):
-    """
-    Staff-only page for requesting a stock correction. Shows a
-    submission form plus the Staff member's own 5 most recent
-    requests with their current status.
-    """
+    """Staff-only page for requesting a stock correction."""
     if request.method == 'POST':
         form = StockAdjustmentRequestForm(request.POST)
         if form.is_valid():
@@ -147,10 +136,7 @@ def submit_adjustment_request(request):
 @login_required
 @manager_required
 def adjustment_requests(request):
-    """
-    Manager-only review queue: every PENDING stock adjustment
-    request, newest first.
-    """
+    """Manager-only review queue: every PENDING request, newest first."""
     pending_requests = (
         StockAdjustmentRequest.objects
         .filter(status=StockAdjustmentRequest.Status.PENDING)
@@ -166,10 +152,7 @@ def adjustment_requests(request):
 @login_required
 @manager_required
 def approve_adjustment_request(request, pk):
-    """
-    Applies a PENDING request's quantity_change to Inventory via
-    services.approve_adjustment, then returns to the review queue.
-    """
+    """Applies a PENDING request's quantity_change to Inventory."""
     adjustment_request = get_object_or_404(StockAdjustmentRequest, pk=pk)
     if request.method == 'POST':
         try:
@@ -183,10 +166,7 @@ def approve_adjustment_request(request, pk):
 @login_required
 @manager_required
 def reject_adjustment_request(request, pk):
-    """
-    Marks a PENDING request REJECTED with no Inventory/AuditLog
-    changes, per the confirmed workflow.
-    """
+    """Marks a PENDING request REJECTED with no Inventory changes."""
     adjustment_request = get_object_or_404(StockAdjustmentRequest, pk=pk)
     if request.method == 'POST':
         try:
@@ -200,14 +180,7 @@ def reject_adjustment_request(request, pk):
 @login_required
 @role_required(User.Role.STAFF, User.Role.MANAGER)
 def inventory_list(request):
-    """
-    Searchable, filterable, sortable, paginated view of every
-    current Inventory row. Sorting happens in Python on the fully
-    materialized row list (not via queryset.order_by()) so that
-    "Status" — a derived value, not a real column — can be sorted
-    with exactly the same code path as every other column, rather
-    than needing special-case handling.
-    """
+    """Searchable, filterable, sortable, paginated Inventory view."""
     search_query = request.GET.get('q', '').strip()
     category_id = request.GET.get('category', '')
     low_stock_only = request.GET.get('low_stock') == '1'
@@ -225,7 +198,7 @@ def inventory_list(request):
     inventory_qs = (
         Inventory.objects
         .select_related('product', 'product__category', 'location')
-        .order_by('pk')  # stable base order so Python sort below has deterministic tie-breaking
+        .order_by('pk')
     )
 
     if search_query:
@@ -286,12 +259,7 @@ def inventory_list(request):
 @login_required
 @manager_required
 def product_list(request):
-    """
-    Manager-only Product Management: view, search/filter/sort,
-    create, and edit Products. Stock status is DERIVED, never
-    stored, computed fresh from total Inventory quantity vs.
-    low_stock_threshold on every request.
-    """
+    """Manager-only Product Management: search/filter/sort, create, edit."""
     search_query = request.GET.get('q', '').strip()
     category_id = request.GET.get('category', '')
     status_filter = request.GET.get('status', '')
@@ -337,9 +305,6 @@ def product_list(request):
             "Supplier": product.supplier.name,
             "Low-Stock Threshold": product.low_stock_threshold,
             "Total Stock": total,
-            # A dict (not a plain string) here is a signal to
-            # management_modals.js to render this as a colored
-            # status badge instead of plain text — see STOCK_STATUS_BADGE.
             "Status": {"__type": "badge", **STOCK_STATUS_BADGE[product.stock_status]},
         })
         product.edit_json = json.dumps({
@@ -382,10 +347,7 @@ def product_list(request):
 @login_required
 @manager_required
 def product_create(request):
-    """
-    Handles the Add Product modal's POST. Always redirects back to
-    the list; a failed save surfaces its first error as a toast.
-    """
+    """Handles the Add Product modal's POST."""
     if request.method == 'POST':
         form = ProductForm(request.POST)
         if form.is_valid():
@@ -399,7 +361,7 @@ def product_create(request):
 @login_required
 @manager_required
 def product_edit(request, pk):
-    """Handles the Edit Product modal's POST for an existing Product."""
+    """Handles the Edit Product modal's POST."""
     product = get_object_or_404(Product, pk=pk)
     if request.method == 'POST':
         form = ProductForm(request.POST, instance=product)
@@ -414,11 +376,7 @@ def product_edit(request, pk):
 @login_required
 @manager_required
 def supplier_list(request):
-    """
-    Manager-only Supplier Management: view, search/sort, create,
-    and edit Suppliers. Each row shows how many Products currently
-    reference it.
-    """
+    """Manager-only Supplier Management: search/sort, create, edit."""
     search_query = request.GET.get('q', '').strip()
     sort_field = request.GET.get('sort', 'name')
     sort_dir = request.GET.get('dir', 'asc')
@@ -436,9 +394,6 @@ def supplier_list(request):
     suppliers = list(suppliers_qs)
 
     for supplier in suppliers:
-        # A plain list (not a joined string) — management_modals.js
-        # renders this as a bulleted list in the detail modal rather
-        # than one long comma-separated line.
         product_names = list(supplier.products.values_list('name', flat=True))
         supplier.detail_json = json.dumps({
             "Supplier Name": supplier.name,
@@ -485,7 +440,7 @@ def supplier_create(request):
 @login_required
 @manager_required
 def supplier_edit(request, pk):
-    """Handles the Edit Supplier modal's POST for an existing Supplier."""
+    """Handles the Edit Supplier modal's POST."""
     supplier = get_object_or_404(Supplier, pk=pk)
     if request.method == 'POST':
         form = SupplierForm(request.POST, instance=supplier)
@@ -495,3 +450,177 @@ def supplier_edit(request, pk):
         else:
             messages.error(request, next(iter(form.errors.values()))[0])
     return redirect('warehouse:supplier_list')
+
+
+@login_required
+@manager_required
+def category_list(request):
+    """
+    Manager-only Category Management: search/sort, create, edit.
+    Architecture note: Category management was originally slated as
+    an Admin-only page, but this was deliberately changed to a
+    Manager permission per project decision.
+    """
+    search_query = request.GET.get('q', '').strip()
+    sort_field = request.GET.get('sort', 'name')
+    sort_dir = request.GET.get('dir', 'asc')
+
+    categories_qs = Category.objects.annotate(product_count=Count('products')).order_by('pk')
+
+    if search_query:
+        categories_qs = categories_qs.filter(name__icontains=search_query)
+
+    categories = list(categories_qs)
+
+    for category in categories:
+        product_names = list(category.products.values_list('name', flat=True))
+        category.detail_json = json.dumps({
+            "Category Name": category.name,
+            "Products in this Category": product_names,
+        })
+        category.edit_json = json.dumps({
+            "name": category.name,
+        })
+
+    def sort_key(c):
+        return {
+            'name': c.name.lower(),
+            'product_count': c.product_count,
+        }.get(sort_field, c.name.lower())
+
+    categories.sort(key=sort_key, reverse=(sort_dir == 'desc'))
+
+    return render(request, 'warehouse/categories.html', {
+        'page_title': 'Categories',
+        'categories': categories,
+        'search_query': search_query,
+        'sort': sort_field,
+        'dir': sort_dir,
+    })
+
+
+@login_required
+@manager_required
+def category_create(request):
+    """Handles the Add Category modal's POST."""
+    if request.method == 'POST':
+        form = CategoryForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Category created successfully.")
+        else:
+            messages.error(request, next(iter(form.errors.values()))[0])
+    return redirect('warehouse:category_list')
+
+
+@login_required
+@manager_required
+def category_edit(request, pk):
+    """Handles the Edit Category modal's POST."""
+    category = get_object_or_404(Category, pk=pk)
+    if request.method == 'POST':
+        form = CategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Category updated successfully.")
+        else:
+            messages.error(request, next(iter(form.errors.values()))[0])
+    return redirect('warehouse:category_list')
+
+
+@login_required
+@manager_required
+def location_list(request):
+    """
+    Manager-only Location Management: search/sort, create, edit.
+    Architecture note: same deliberate change as Category above —
+    originally Admin-only per the architecture doc, moved to
+    Manager per project decision.
+    """
+    search_query = request.GET.get('q', '').strip()
+    sort_field = request.GET.get('sort', 'location')
+    sort_dir = request.GET.get('dir', 'asc')
+
+    locations_qs = (
+        Location.objects
+        .annotate(stocked_count=Count('inventory_records', filter=Q(inventory_records__quantity__gt=0)))
+        .prefetch_related('inventory_records__product')
+        .order_by('pk')
+    )
+
+    locations = list(locations_qs)
+
+    if search_query:
+        # Matched against the canonical "A-R01-B01" string, not the
+        # raw zone/rack/bin fields separately — a search for the
+        # full code (or any substring of it, e.g. "R01" or just "A")
+        # wouldn't match anything meaningful against the split
+        # fields, since rack/bin are stored as plain integers, not
+        # the zero-padded display strings. Filtered in Python since
+        # Location count is small (same reasoning as the sort logic
+        # below, which already materializes this list).
+        normalized_query = search_query.strip().upper()
+        locations = [loc for loc in locations if normalized_query in str(loc)]
+
+    for location in locations:
+        product_names = [inv.product.name for inv in location.inventory_records.all() if inv.quantity > 0]
+        location.detail_json = json.dumps({
+            "Location Code": str(location),
+            "Zone": location.zone,
+            "Rack": location.rack,
+            "Bin": location.bin,
+            "Products Stocked Here": product_names,
+        })
+        location.edit_json = json.dumps({
+            "zone": location.zone,
+            "rack": location.rack,
+            "bin": location.bin,
+        })
+
+    def sort_key(loc):
+        return {
+            'location': (loc.zone, loc.rack, loc.bin),
+            'zone': loc.zone,
+            'rack': loc.rack,
+            'bin': loc.bin,
+            'stocked_count': loc.stocked_count,
+        }.get(sort_field, (loc.zone, loc.rack, loc.bin))
+
+    locations.sort(key=sort_key, reverse=(sort_dir == 'desc'))
+
+    return render(request, 'warehouse/locations.html', {
+        'page_title': 'Locations',
+        'locations': locations,
+        'search_query': search_query,
+        'sort': sort_field,
+        'dir': sort_dir,
+    })
+
+
+@login_required
+@manager_required
+def location_create(request):
+    """Handles the Add Location modal's POST."""
+    if request.method == 'POST':
+        form = LocationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Location created successfully.")
+        else:
+            messages.error(request, next(iter(form.errors.values()))[0])
+    return redirect('warehouse:location_list')
+
+
+@login_required
+@manager_required
+def location_edit(request, pk):
+    """Handles the Edit Location modal's POST."""
+    location = get_object_or_404(Location, pk=pk)
+    if request.method == 'POST':
+        form = LocationForm(request.POST, instance=location)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Location updated successfully.")
+        else:
+            messages.error(request, next(iter(form.errors.values()))[0])
+    return redirect('warehouse:location_list')

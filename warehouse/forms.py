@@ -11,7 +11,7 @@ from django import forms
 from django.utils import timezone
 
 from . import services
-from .models import Location, Product, Supplier
+from .models import Category, Location, Product, Supplier
 
 
 class ReceiveGoodsForm(forms.Form):
@@ -20,11 +20,7 @@ class ReceiveGoodsForm(forms.Form):
 
     Product choices intentionally include EVERY product in the
     catalog, including ones with no Inventory yet — receiving is the
-    operation that creates a product's first Inventory row, so
-    restricting this dropdown would make it impossible to ever
-    receive a brand-new product. Location choices are similarly
-    unrestricted: any valid warehouse location is a legal place to
-    receive goods into.
+    operation that creates a product's first Inventory row.
     """
 
     product = forms.ModelChoiceField(
@@ -48,15 +44,9 @@ class ReceiveGoodsForm(forms.Form):
 
 class DispatchGoodsForm(forms.Form):
     """
-    Staff-facing form for logging outbound stock.
-
-    Unlike Receive, Dispatch must only ever target Product+Location
-    combinations that currently hold physical stock — the Product
-    queryset is restricted in __init__ below (not as a class-level
-    default, so it's re-fetched fresh on every request rather than
-    once at server startup). The Location field's queryset stays
-    broad at the Django level; the authoritative Product+Location
-    PAIR check happens in services.dispatch_goods().
+    Staff-facing form for logging outbound stock. Product queryset
+    restricted in __init__ (not as a class-level default) so it's
+    refetched fresh on every request rather than once at startup.
     """
 
     product = forms.ModelChoiceField(
@@ -84,11 +74,8 @@ class DispatchGoodsForm(forms.Form):
 
 class StockAdjustmentRequestForm(forms.Form):
     """
-    Staff-facing form for requesting a stock correction.
-
-    Same Product-choice restriction as DispatchGoodsForm and for the
-    same reason: an adjustment corrects EXISTING physical stock, it
-    is not a disguised way to receive a brand-new product.
+    Staff-facing form for requesting a stock correction. Same
+    Product-choice restriction as DispatchGoodsForm.
     """
 
     product = forms.ModelChoiceField(
@@ -123,13 +110,7 @@ class StockAdjustmentRequestForm(forms.Form):
 
 
 class ProductForm(forms.ModelForm):
-    """
-    Manager-facing form for creating/editing a Product. Backs the
-    shared Add/Edit modal on the Product Management page — Category
-    and Supplier fields auto-populate their dropdown choices from
-    the model's ForeignKey definitions, so no explicit queryset is
-    needed here the way DispatchGoodsForm needed one.
-    """
+    """Manager-facing form for creating/editing a Product."""
 
     class Meta:
         model = Product
@@ -152,4 +133,38 @@ class SupplierForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'contact_info': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+
+class CategoryForm(forms.ModelForm):
+    """Manager-facing form for creating/editing a Category."""
+
+    class Meta:
+        model = Category
+        fields = ['name']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+
+class LocationForm(forms.ModelForm):
+    """
+    Manager-facing form for creating/editing a Location.
+
+    Zone's uppercase-only validation and rack/bin's positive-integer
+    validation both live on the model itself (see Location.save()
+    and the field validators in models.py) — this form doesn't
+    duplicate that logic, it just supplies the widgets. Django's
+    ModelForm automatically surfaces the model's own
+    UniqueConstraint on (zone, rack, bin) as a form error if a
+    duplicate is submitted.
+    """
+
+    class Meta:
+        model = Location
+        fields = ['zone', 'rack', 'bin']
+        widgets = {
+            'zone': forms.TextInput(attrs={'class': 'form-control', 'maxlength': 10, 'placeholder': 'e.g. A'}),
+            'rack': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'bin': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
         }

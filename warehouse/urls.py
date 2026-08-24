@@ -2,7 +2,8 @@
 warehouse/urls.py
 ────────────────────────────────────────────────────────────────
 URL routes for warehouse workflows: receiving, dispatching,
-inventory, products, suppliers, locations, and adjustments.
+inventory, products, suppliers, categories, locations, and
+adjustments.
 """
 
 from django.urls import path
@@ -29,4 +30,12 @@ urlpatterns = [
     path('suppliers/', views.supplier_list, name='supplier_list'),
     path('suppliers/create/', views.supplier_create, name='supplier_create'),
     path('suppliers/<int:pk>/edit/', views.supplier_edit, name='supplier_edit'),
+
+    path('categories/', views.category_list, name='category_list'),
+    path('categories/create/', views.category_create, name='category_create'),
+    path('categories/<int:pk>/edit/', views.category_edit, name='category_edit'),
+
+    path('locations/', views.location_list, name='location_list'),
+    path('locations/create/', views.location_create, name='location_create'),
+    path('locations/<int:pk>/edit/', views.location_edit, name='location_edit'),
 ]

@@ -1,0 +1,148 @@
+{% extends "layouts/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Locations — WareFlow{% endblock %}
+
+{% block dashboard_content %}
+<div class="form-page-header">
+    <div class="form-page-heading">
+        <div class="form-page-icon form-page-icon--adjustment">
+            <i class="bi bi-geo-alt" aria-hidden="true"></i>
+        </div>
+        <div>
+            <h1 class="form-page-title">Locations</h1>
+            <p class="form-page-subtitle">Manage warehouse storage locations</p>
+        </div>
+    </div>
+    <button type="button" class="btn btn-adjustment" id="addRecordButton" data-add-title="Add Location">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> Add Location
+    </button>
+</div>
+
+<div class="list-toolbar">
+    <form method="get" class="list-filter-form">
+        <div class="search-input-group">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Search by code, e.g. A-R01-B01…">
+        </div>
+
+        <select name="sort" class="form-select">
+            <option value="location" {% if sort == "location" %}selected{% endif %}>Sort: Location</option>
+            <option value="zone" {% if sort == "zone" %}selected{% endif %}>Sort: Zone</option>
+            <option value="rack" {% if sort == "rack" %}selected{% endif %}>Sort: Rack</option>
+            <option value="bin" {% if sort == "bin" %}selected{% endif %}>Sort: Bin</option>
+            <option value="stocked_count" {% if sort == "stocked_count" %}selected{% endif %}>Sort: Products Stocked</option>
+        </select>
+
+        <input type="hidden" name="dir" id="id_dir" value="{{ dir }}">
+        <button type="button" class="btn btn-outline-secondary btn-icon-square" id="dir-toggle-button">
+            <i class="bi bi-sort-down" aria-hidden="true"></i>
+        </button>
+
+        <button type="submit" class="btn btn-adjustment">
+            <i class="bi bi-funnel" aria-hidden="true"></i> Filter
+        </button>
+        {% if search_query %}
+            <a href="{% url 'warehouse:location_list' %}" class="btn btn-outline-secondary">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if locations %}
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="wf-table">
+            <thead>
+                <tr>
+                    <th><i class="bi bi-geo-alt" aria-hidden="true"></i> Location</th>
+                    <th><i class="bi bi-flag" aria-hidden="true"></i> Zone</th>
+                    <th class="text-end"><i class="bi bi-grid-3x3-gap" aria-hidden="true"></i> Rack</th>
+                    <th class="text-end"><i class="bi bi-archive" aria-hidden="true"></i> Bin</th>
+                    <th class="text-end"><i class="bi bi-boxes" aria-hidden="true"></i> Products Stocked</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for location in locations %}
+                <tr class="detail-row-trigger" data-pk="{{ location.pk }}" data-detail='{{ location.detail_json }}' data-edit='{{ location.edit_json }}'>
+                    <td><span class="location-chip">{{ location }}</span></td>
+                    <td>{{ location.zone }}</td>
+                    <td class="text-end">{{ location.rack }}</td>
+                    <td class="text-end">{{ location.bin }}</td>
+                    <td class="text-end">{{ location.stocked_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+    {% include "components/empty_state.html" with icon="bi-geo-alt" title="No locations found" subtitle="Try a different search, or add a new location." %}
+{% endif %}
+
+<!-- Detail Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Location Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="detailModalBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-adjustment" id="detailEditButton" data-edit-title="Edit Location">
+                    <i class="bi bi-pencil" aria-hidden="true"></i> Edit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Shared Add/Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="editModalForm"
+                  data-create-url="{% url 'warehouse:location_create' %}"
+                  data-edit-url-template="{% url 'warehouse:location_edit' 0 %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalTitle">Add Location</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="form-field">
+                                <label for="modal_zone" class="form-field-label"><i class="bi bi-flag" aria-hidden="true"></i> Zone</label>
+                                <input type="text" name="zone" id="modal_zone" class="form-control" maxlength="10" placeholder="e.g. A" required>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="form-field">
+                                <label for="modal_rack" class="form-field-label"><i class="bi bi-grid-3x3-gap" aria-hidden="true"></i> Rack</label>
+                                <input type="number" name="rack" id="modal_rack" class="form-control" min="1" required>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="form-field">
+                                <label for="modal_bin" class="form-field-label"><i class="bi bi-archive" aria-hidden="true"></i> Bin</label>
+                                <input type="number" name="bin" id="modal_bin" class="form-control" min="1" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-adjustment">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/sort_toggle.js' %}"></script>
+<script src="{% static 'js/management_modals.js' %}"></script>
+{% endblock %}
