@@ -69,9 +69,14 @@
 }
 
 .wf-table-product-sku {
-    font-size: 0.78rem;
+    font-size: 0.88rem;
     color: var(--color-text-muted);
     font-family: 'Courier New', monospace;
+}
+
+.wf-table-timestamp {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
 }
 
 .wf-table-quantity {
@@ -90,6 +95,7 @@
     font-size: 0.85rem;
     color: var(--color-text-muted);
     font-family: 'Courier New', monospace;
+    white-space: nowrap;
 }
 
 /* ═══════════════════ PAGINATION ═══════════════════ */

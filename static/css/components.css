@@ -826,3 +826,46 @@
 
 .master-data-card--adjustment .master-data-card-icon { background-color: var(--color-adjustment); }
 .master-data-card--adjustment:hover { border-color: var(--color-adjustment); }
+
+/* ═══════════════════ ACTION BADGES (Audit Logs) ═══════════════════ */
+
+.action-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.action-badge--inbound {
+    background-color: rgba(47, 158, 99, 0.12);
+    color: var(--color-success);
+}
+
+.action-badge--outbound {
+    background-color: rgba(232, 135, 30, 0.12);
+    color: var(--color-accent);
+}
+
+.action-badge--adjustment {
+    background-color: rgba(99, 102, 241, 0.12);
+    color: var(--color-adjustment);
+}
+
+/* ═══════════════════ DATE RANGE FILTER LABELS ═══════════════════ */
+
+.date-filter-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.date-filter-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}

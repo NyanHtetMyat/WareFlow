@@ -1,0 +1,122 @@
+{% extends "layouts/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Audit Logs — WareFlow{% endblock %}
+
+{% block dashboard_content %}
+<div class="form-page-header">
+    <div class="form-page-heading">
+        <div class="form-page-icon form-page-icon--adjustment">
+            <i class="bi bi-clock-history" aria-hidden="true"></i>
+        </div>
+        <div>
+            <h1 class="form-page-title">Audit Logs</h1>
+            <p class="form-page-subtitle">Permanent record of every inventory-affecting operation</p>
+        </div>
+    </div>
+</div>
+
+<div class="list-toolbar">
+    <form method="get" class="list-filter-form">
+        <div class="search-input-group">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Search SKU or location…">
+        </div>
+
+        <select name="action_type" class="form-select">
+            <option value="">All Actions</option>
+            {% for value, label in action_types %}
+                <option value="{{ value }}" {% if action_type == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+
+        <div class="date-filter-group">
+            <span class="date-filter-label">From</span>
+            <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
+        </div>
+        <div class="date-filter-group">
+            <span class="date-filter-label">To</span>
+            <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
+        </div>
+
+        <select name="sort" class="form-select">
+            <option value="timestamp" {% if sort == "timestamp" %}selected{% endif %}>Sort: Timestamp</option>
+            <option value="user" {% if sort == "user" %}selected{% endif %}>Sort: User</option>
+            <option value="action_type" {% if sort == "action_type" %}selected{% endif %}>Sort: Action</option>
+            <option value="product_sku" {% if sort == "product_sku" %}selected{% endif %}>Sort: Product SKU</option>
+            <option value="quantity_shift" {% if sort == "quantity_shift" %}selected{% endif %}>Sort: Quantity Shift</option>
+            <option value="resulting_quantity" {% if sort == "resulting_quantity" %}selected{% endif %}>Sort: Resulting Quantity</option>
+        </select>
+
+        <input type="hidden" name="dir" id="id_dir" value="{{ dir }}">
+        <button type="button" class="btn btn-outline-secondary btn-icon-square" id="dir-toggle-button">
+            <i class="bi bi-sort-down" aria-hidden="true"></i>
+        </button>
+
+        <button type="submit" class="btn btn-adjustment">
+            <i class="bi bi-funnel" aria-hidden="true"></i> Filter
+        </button>
+        {% if search_query or action_type or date_from or date_to %}
+            <a href="{% url 'audit:audit_logs' %}" class="btn btn-outline-secondary">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if page_obj.object_list %}
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="wf-table">
+            <thead>
+                <tr>
+                    <th><i class="bi bi-clock" aria-hidden="true"></i> Timestamp</th>
+                    <th><i class="bi bi-person" aria-hidden="true"></i> User</th>
+                    <th><i class="bi bi-tag" aria-hidden="true"></i> Action</th>
+                    <th><i class="bi bi-upc-scan" aria-hidden="true"></i> Product SKU</th>
+                    <th><i class="bi bi-box" aria-hidden="true"></i> Product Name</th>
+                    <th><i class="bi bi-geo-alt" aria-hidden="true"></i> Location</th>
+                    <th class="text-end"><i class="bi bi-dash-lg" aria-hidden="true"></i> Original Qty</th>
+                    <th class="text-end"><i class="bi bi-arrow-left-right" aria-hidden="true"></i> Quantity Shift</th>
+                    <th class="text-end"><i class="bi bi-boxes" aria-hidden="true"></i> Resulting Qty</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in page_obj.object_list %}
+                <tr>
+                    <td class="wf-table-timestamp">{{ log.timestamp|date:"M d, Y g:i A" }}</td>
+                    <td>{{ log.user.username }}</td>
+                    <td>
+                        {% if log.action_type == "INBOUND" %}
+                            <span class="action-badge action-badge--inbound"><i class="bi bi-box-arrow-in-down" aria-hidden="true"></i> Inbound</span>
+                        {% elif log.action_type == "OUTBOUND" %}
+                            <span class="action-badge action-badge--outbound"><i class="bi bi-box-arrow-up" aria-hidden="true"></i> Outbound</span>
+                        {% else %}
+                            <span class="action-badge action-badge--adjustment"><i class="bi bi-arrow-left-right" aria-hidden="true"></i> Adjustment</span>
+                        {% endif %}
+                    </td>
+                    <td class="wf-table-product-sku">{{ log.product_sku }}</td>
+                    <td>{{ log.product_name|default:"—" }}</td>
+                    <td><span class="location-chip">{{ log.location_info }}</span></td>
+                    <td class="text-end text-muted">{{ log.original_quantity }}</td>
+                    <td class="text-end">
+                        <span class="quantity-change-badge {% if log.quantity_shift >= 0 %}quantity-change-badge--increase{% else %}quantity-change-badge--decrease{% endif %}">
+                            {% if log.quantity_shift > 0 %}+{% endif %}{{ log.quantity_shift }}
+                        </span>
+                    </td>
+                    <td class="text-end wf-table-quantity">{{ log.resulting_quantity }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring %}
+
+{% else %}
+    {% include "components/empty_state.html" with icon="bi-clock-history" title="No audit records found" subtitle="Try adjusting your search or filters." %}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/sort_toggle.js' %}"></script>
+{% endblock %}
