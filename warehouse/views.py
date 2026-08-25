@@ -7,13 +7,16 @@ coordinate the two and handle the HTTP request/response cycle.
 """
 
 import json
+from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models import Count, F, Q, Sum
+from django.db.models.functions import TruncDate
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from accounts.decorators import manager_required, role_required, staff_required
 from accounts.models import User
@@ -28,7 +31,7 @@ from .forms import (
     StockAdjustmentRequestForm,
     SupplierForm,
 )
-from .models import Category, Inventory, Location, Product, StockAdjustmentRequest, Supplier
+from .models import AuditLog, Category, Inventory, Location, Product, StockAdjustmentRequest, Supplier
 
 STOCK_STATUS_RANK = {'ok': 0, 'low_stock': 1, 'out_of_stock': 2}
 
@@ -306,12 +309,7 @@ def product_list(request):
 
     for product in products:
         total = product.total_quantity or 0
-        if total == 0:
-            product.stock_status = 'out_of_stock'
-        elif total < product.low_stock_threshold:
-            product.stock_status = 'low_stock'
-        else:
-            product.stock_status = 'ok'
+        product.stock_status = services.compute_stock_status(total, product.low_stock_threshold)
 
         product.detail_json = json.dumps({
             "SKU": product.sku,
@@ -647,3 +645,121 @@ def location_edit(request, pk):
         else:
             messages.error(request, next(iter(form.errors.values()))[0])
     return redirect('warehouse:location_list')
+
+
+@login_required
+@staff_required
+def staff_dashboard(request):
+    """
+    Staff's own daily activity overview. Deliberately lightweight
+    per the confirmed scope: no charts, no quick-action buttons —
+    the sidebar already covers navigation to Receive/Dispatch/
+    Adjustments directly. Just today's numbers and today's own
+    transaction history.
+    """
+    today = timezone.localdate()
+    today_logs_qs = (
+        AuditLog.objects
+        .filter(user=request.user, timestamp__date=today)
+        .order_by('-timestamp')
+    )
+
+    received_today = today_logs_qs.filter(
+        action_type=AuditLog.ActionType.INBOUND
+    ).aggregate(total=Sum('quantity_shift'))['total'] or 0
+
+    dispatched_today = abs(
+        today_logs_qs.filter(action_type=AuditLog.ActionType.OUTBOUND)
+        .aggregate(total=Sum('quantity_shift'))['total'] or 0
+    )
+
+    pending_count = StockAdjustmentRequest.objects.filter(
+        staff=request.user, status=StockAdjustmentRequest.Status.PENDING
+    ).count()
+
+    today_logs = list(today_logs_qs)
+
+    # product_sku is a text snapshot, not a live FK (see the design
+    # note on AuditLog in models.py) — Product names are looked up
+    # separately, for display only, same pattern as audit/views.py.
+    sku_to_name = dict(
+        Product.objects.filter(sku__in=[log.product_sku for log in today_logs]).values_list('sku', 'name')
+    )
+    for log in today_logs:
+        log.product_name = sku_to_name.get(log.product_sku, '')
+
+    return render(request, 'warehouse/staff_dashboard.html', {
+        'page_title': 'Dashboard',
+        'stats': {
+            'received_today': received_today,
+            'dispatched_today': dispatched_today,
+            'pending_count': pending_count,
+            'transaction_count': len(today_logs),
+        },
+        'today_logs': today_logs,
+    })
+
+
+@login_required
+@manager_required
+def manager_dashboard(request):
+    """
+    Manager's operational overview. Deliberately concise per the
+    confirmed scope: KPI cards plus ONE simple 7-day Received vs
+    Dispatched trend chart. Deeper analytics/comparisons are
+    reserved for the future Reports page, not duplicated here.
+    """
+    today = timezone.localdate()
+
+    stock_counts = services.get_stock_status_counts()
+
+    today_logs = AuditLog.objects.filter(timestamp__date=today)
+    received_today = today_logs.filter(
+        action_type=AuditLog.ActionType.INBOUND
+    ).aggregate(total=Sum('quantity_shift'))['total'] or 0
+    dispatched_today = abs(
+        today_logs.filter(action_type=AuditLog.ActionType.OUTBOUND)
+        .aggregate(total=Sum('quantity_shift'))['total'] or 0
+    )
+    pending_count = StockAdjustmentRequest.objects.filter(
+        status=StockAdjustmentRequest.Status.PENDING
+    ).count()
+    total_products = Product.objects.count()
+
+    # ── 7-day Received vs Dispatched trend for the single chart ──
+    days = [today - timedelta(days=offset) for offset in range(6, -1, -1)]
+    daily_rows = (
+        AuditLog.objects
+        .filter(timestamp__date__gte=days[0], action_type__in=[AuditLog.ActionType.INBOUND, AuditLog.ActionType.OUTBOUND])
+        .annotate(day=TruncDate('timestamp'))
+        .values('day', 'action_type')
+        .annotate(total=Sum('quantity_shift'))
+    )
+
+    received_by_day = {d: 0 for d in days}
+    dispatched_by_day = {d: 0 for d in days}
+    for row in daily_rows:
+        if row['day'] not in received_by_day:
+            continue
+        if row['action_type'] == AuditLog.ActionType.INBOUND:
+            received_by_day[row['day']] = row['total']
+        else:
+            dispatched_by_day[row['day']] = abs(row['total'])
+
+    chart_data = {
+        'labels': [d.strftime('%b %d') for d in days],
+        'received': [received_by_day[d] for d in days],
+        'dispatched': [dispatched_by_day[d] for d in days],
+    }
+
+    return render(request, 'warehouse/manager_dashboard.html', {
+        'page_title': 'Dashboard',
+        'stock_counts': stock_counts,
+        'stats': {
+            'total_products': total_products,
+            'received_today': received_today,
+            'dispatched_today': dispatched_today,
+            'pending_count': pending_count,
+        },
+        'chart_data': chart_data,
+    })

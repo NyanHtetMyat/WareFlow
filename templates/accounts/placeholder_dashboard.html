@@ -1,17 +1,12 @@
 {% extends "layouts/dashboard_base.html" %}
 {% comment %}
   ────────────────────────────────────────────────────────────────
-  TEMPORARY PAGE — SCHEDULED FOR REPLACEMENT
+  ADMIN-ONLY PLACEHOLDER
   ────────────────────────────────────────────────────────────────
-  This template exists only because accounts.views.dashboard_redirect
-  needs somewhere to render after a successful login, and the real
-  Staff/Manager dashboards (reports app) don't exist yet.
-
-  Once reports/views.py has staff_dashboard and manager_dashboard views,
-  this file should be deleted and accounts.views.dashboard_redirect
-  should redirect to those views based on request.user.role, instead
-  of rendering this template. See the matching comment in
-  accounts/views.py for the exact redirect logic to add.
+  STAFF and MANAGER now get real dashboards (warehouse app — see
+  accounts.views.dashboard_redirect). This template only renders
+  for ADMIN now, since Admin functionality is still out of scope.
+  Replace with a real Admin dashboard when that work starts.
   ────────────────────────────────────────────────────────────────
 {% endcomment %}
 

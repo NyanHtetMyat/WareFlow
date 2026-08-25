@@ -19,6 +19,7 @@ entry created in the same transaction, so no history is lost.
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Sum
 from django.utils import timezone
 
 from .models import AuditLog, Inventory, Product, StockAdjustmentRequest
@@ -72,6 +73,35 @@ def get_stocked_products():
         .distinct()
         .order_by('sku')
     )
+
+
+def compute_stock_status(total_quantity, threshold):
+    """
+    Shared classification for the derived OK / Low Stock / Out of
+    Stock status. Extracted here once both Product Management (per
+    row) and the Manager Dashboard (aggregate KPI counts) needed
+    the exact same three-way comparison, per the project's "reuse
+    before duplicating" rule.
+    """
+    total = total_quantity or 0
+    if total == 0:
+        return 'out_of_stock'
+    if total < threshold:
+        return 'low_stock'
+    return 'ok'
+
+
+def get_stock_status_counts():
+    """
+    Aggregate counts of Products in each derived stock-status
+    bucket, for the Manager Dashboard's KPI cards.
+    """
+    counts = {'ok': 0, 'low_stock': 0, 'out_of_stock': 0}
+    for total, threshold in Product.objects.annotate(
+        total_quantity=Sum('inventory_records__quantity')
+    ).values_list('total_quantity', 'low_stock_threshold'):
+        counts[compute_stock_status(total, threshold)] += 1
+    return counts
 
 
 def get_inventory_location_map():

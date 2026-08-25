@@ -50,15 +50,22 @@ def logout_view(request):
 @login_required
 def dashboard_redirect(request):
     """
-    Sends a logged-in user to their correct starting page based on role.
+    Sends a logged-in user to their correct starting page based on
+    role. STAFF and MANAGER now have real dashboards — they live in
+    the warehouse app (not reports/), a deliberate architecture
+    decision: these are quick operational overviews, not deep
+    analytics, so they sit alongside the operations they summarize.
+    Deeper analysis is reserved for the future Reports page instead.
 
-    Currently renders a temporary placeholder page, since the warehouse
-    and reports apps (and their dashboard views) haven't been built yet.
-    Once those exist, this will redirect instead of rendering a page:
-        STAFF   -> reports:staff_dashboard
-        MANAGER -> reports:manager_dashboard
-        ADMIN   -> accounts:user_management
+    ADMIN still renders the placeholder — Admin functionality
+    remains explicitly out of scope for now.
     """
+    if request.user.is_staff_role:
+        return redirect('warehouse:staff_dashboard')
+
+    if request.user.is_manager:
+        return redirect('warehouse:manager_dashboard')
+
     return render(request, 'accounts/placeholder_dashboard.html', {
         'role': request.user.get_role_display(),
     })

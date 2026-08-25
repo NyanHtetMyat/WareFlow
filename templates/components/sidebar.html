@@ -57,7 +57,7 @@
     {# ── Dashboard: same landing route for every role right now ── #}
     <li class="nav-item">
         <a href="{% url 'accounts:dashboard_redirect' %}"
-           class="nav-link {% if request.resolver_match.url_name == 'dashboard_redirect' %}active{% endif %}"
+           class="nav-link {% if request.resolver_match.url_name == 'dashboard_redirect' or request.resolver_match.url_name == 'staff_dashboard' or request.resolver_match.url_name == 'manager_dashboard' %}active{% endif %}"
            title="Dashboard">
             <i class="bi bi-speedometer2 nav-icon" aria-hidden="true"></i>
             <span class="nav-label">Dashboard</span>

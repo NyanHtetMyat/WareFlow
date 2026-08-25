@@ -1,0 +1,94 @@
+{% extends "layouts/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Dashboard — WareFlow{% endblock %}
+
+{% block dashboard_content %}
+<div class="form-page-header">
+    <div class="form-page-heading">
+        <div class="form-page-icon form-page-icon--adjustment">
+            <i class="bi bi-speedometer2" aria-hidden="true"></i>
+        </div>
+        <div>
+            <h1 class="form-page-title">Welcome back, {{ user.username }}</h1>
+            <p class="form-page-subtitle">Operational overview</p>
+        </div>
+    </div>
+</div>
+
+<div class="dash-hero-grid">
+
+    {# ── Stock Status: single semicircle gauge instead of 3 identical cards ── #}
+    <div class="dash-stock-gauge-card">
+        <h2 class="dashboard-section-label dashboard-section-label--first">Stock Status</h2>
+
+        <div class="stock-gauge-wrap">
+            <canvas id="stockGaugeChart"></canvas>
+        </div>
+        <div class="stock-gauge-total">{{ stats.total_products }}</div>
+        <div class="stock-gauge-total-label">Total Products</div>
+
+        <div class="stock-gauge-legend">
+            <div class="stock-gauge-legend-item">
+                <span class="legend-dot legend-dot--ok" aria-hidden="true"></span>
+                OK <strong>{{ stock_counts.ok }}</strong>
+            </div>
+            <div class="stock-gauge-legend-item">
+                <span class="legend-dot legend-dot--low" aria-hidden="true"></span>
+                Low <strong>{{ stock_counts.low_stock }}</strong>
+            </div>
+            <div class="stock-gauge-legend-item">
+                <span class="legend-dot legend-dot--out" aria-hidden="true"></span>
+                Out <strong>{{ stock_counts.out_of_stock }}</strong>
+            </div>
+        </div>
+    </div>
+
+    {# ── Today's Activity: 1 hero stat + 3 compact rows, not 4 identical cards ── #}
+    <div class="dash-activity-card">
+        <h2 class="dashboard-section-label dashboard-section-label--first">Today's Activity</h2>
+
+        <div class="dash-activity-hero">
+            <div class="dash-activity-hero-icon"><i class="bi bi-tags" aria-hidden="true"></i></div>
+            <div>
+                <div class="dash-activity-hero-value">{{ stats.total_products }}</div>
+                <div class="dash-activity-hero-label">Total Products</div>
+            </div>
+        </div>
+
+        <div class="dash-activity-rows">
+            <div class="dash-activity-row">
+                <span class="dash-activity-row-icon dash-activity-row-icon--success"><i class="bi bi-box-arrow-in-down" aria-hidden="true"></i></span>
+                <span class="dash-activity-row-label">Units Received Today</span>
+                <span class="dash-activity-row-value">{{ stats.received_today }}</span>
+            </div>
+            <div class="dash-activity-row">
+                <span class="dash-activity-row-icon dash-activity-row-icon--warning"><i class="bi bi-box-arrow-up" aria-hidden="true"></i></span>
+                <span class="dash-activity-row-label">Units Dispatched Today</span>
+                <span class="dash-activity-row-value">{{ stats.dispatched_today }}</span>
+            </div>
+            <div class="dash-activity-row">
+                <span class="dash-activity-row-icon dash-activity-row-icon--adjustment"><i class="bi bi-hourglass-split" aria-hidden="true"></i></span>
+                <span class="dash-activity-row-label">Pending Adjustment Requests</span>
+                <span class="dash-activity-row-value">{{ stats.pending_count }}</span>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<h2 class="dashboard-section-label">Inventory Activity — Last 7 Days</h2>
+<div class="chart-card chart-card--large">
+    <div class="chart-canvas-wrap">
+        <canvas id="activityChart"></canvas>
+    </div>
+</div>
+
+{{ chart_data|json_script:"chart-data" }}
+{{ stock_counts|json_script:"stock-counts-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="{% static 'js/dashboard_chart.js' %}"></script>
+{% endblock %}

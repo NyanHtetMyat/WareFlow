@@ -1,0 +1,75 @@
+{% extends "layouts/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Dashboard — WareFlow{% endblock %}
+
+{% block dashboard_content %}
+<div class="form-page-header">
+    <div class="form-page-heading">
+        <div class="form-page-icon form-page-icon--adjustment">
+            <i class="bi bi-speedometer2" aria-hidden="true"></i>
+        </div>
+        <div>
+            <h1 class="form-page-title">Welcome back, {{ user.username }}</h1>
+            <p class="form-page-subtitle">Your activity overview for today</p>
+        </div>
+    </div>
+</div>
+
+<div class="stat-grid">
+    {% include "components/stat_card.html" with icon="bi-box-arrow-in-down" variant="success" label="Units Received Today" value=stats.received_today %}
+    {% include "components/stat_card.html" with icon="bi-box-arrow-up" variant="warning" label="Units Dispatched Today" value=stats.dispatched_today %}
+    {% include "components/stat_card.html" with icon="bi-hourglass-split" variant="adjustment" label="Pending Adjustment Requests" value=stats.pending_count %}
+    {% include "components/stat_card.html" with icon="bi-list-check" variant="primary" label="Total Transactions Today" value=stats.transaction_count %}
+</div>
+
+<h2 class="dashboard-section-label">Today's Transactions</h2>
+
+{% if today_logs %}
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="wf-table">
+            <thead>
+                <tr>
+                    <th><i class="bi bi-clock" aria-hidden="true"></i> Time</th>
+                    <th><i class="bi bi-tag" aria-hidden="true"></i> Type</th>
+                    <th><i class="bi bi-upc-scan" aria-hidden="true"></i> Product</th>
+                    <th><i class="bi bi-geo-alt" aria-hidden="true"></i> Location</th>
+                    <th class="text-end"><i class="bi bi-arrow-left-right" aria-hidden="true"></i> Quantity</th>
+                    <th class="text-end"><i class="bi bi-boxes" aria-hidden="true"></i> Resulting Stock</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in today_logs %}
+                <tr>
+                    <td class="wf-table-timestamp">{{ log.timestamp|date:"g:i A" }}</td>
+                    <td>
+                        {% if log.action_type == "INBOUND" %}
+                            <span class="action-badge action-badge--inbound"><i class="bi bi-box-arrow-in-down" aria-hidden="true"></i> Inbound</span>
+                        {% elif log.action_type == "OUTBOUND" %}
+                            <span class="action-badge action-badge--outbound"><i class="bi bi-box-arrow-up" aria-hidden="true"></i> Outbound</span>
+                        {% else %}
+                            <span class="action-badge action-badge--adjustment"><i class="bi bi-arrow-left-right" aria-hidden="true"></i> Adjustment</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="wf-table-product-sku">{{ log.product_sku }}</div>
+                        <div class="text-muted">{{ log.product_name|default:"—" }}</div>
+                    </td>
+                    <td><span class="location-chip">{{ log.location_info }}</span></td>
+                    <td class="text-end">
+                        <span class="quantity-change-badge {% if log.quantity_shift >= 0 %}quantity-change-badge--increase{% else %}quantity-change-badge--decrease{% endif %}">
+                            {% if log.quantity_shift > 0 %}+{% endif %}{{ log.quantity_shift }}
+                        </span>
+                    </td>
+                    <td class="text-end wf-table-quantity">{{ log.resulting_quantity }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+    {% include "components/empty_state.html" with icon="bi-clock-history" title="No activity yet today" subtitle="Transactions you perform today will show up here." %}
+{% endif %}
+{% endblock %}

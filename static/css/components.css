@@ -869,3 +869,231 @@
     color: var(--color-text-muted);
     white-space: nowrap;
 }
+
+/* ═══════════════════ DASHBOARD SECTION LABELS ═══════════════════ */
+
+.dashboard-section-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: var(--space-lg) 0 var(--space-sm);
+}
+
+.dashboard-section-label--first {
+    margin-top: 0;
+}
+
+/* ═══════════════════ DASHBOARD CHART CARD ═══════════════════ */
+
+.chart-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+/* ═══════════════════ MANAGER DASHBOARD ═══════════════════ */
+/* Bespoke visual language for the Manager Dashboard specifically —
+   deliberately NOT reusing .stat-card, which stays the standard for
+   every other management page. This section is the one place in
+   the project where that's intentional, not an inconsistency. */
+
+.dash-hero-grid {
+    display: grid;
+    grid-template-columns: minmax(280px, 380px) 1fr;
+    gap: var(--space-lg);
+    align-items: stretch;
+    margin-bottom: var(--space-lg);
+}
+
+@media (max-width: 900px) {
+    .dash-hero-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Stock Status gauge card ── */
+
+.dash-stock-gauge-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-lg);
+}
+
+.dash-stock-gauge-card .dashboard-section-label {
+    align-self: flex-start;
+}
+
+.stock-gauge-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 240px;
+    height: 130px;
+}
+
+.stock-gauge-total {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--color-text);
+    line-height: 1;
+    margin-top: var(--space-sm);
+}
+
+.stock-gauge-total-label {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: var(--space-md);
+}
+
+.stock-gauge-legend {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-lg);
+    flex-wrap: wrap;
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--color-border);
+    width: 100%;
+}
+
+.stock-gauge-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+
+.stock-gauge-legend-item strong {
+    color: var(--color-text);
+    font-weight: 700;
+}
+
+.legend-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.legend-dot--ok { background-color: var(--color-success); }
+.legend-dot--low { background-color: var(--color-warning); }
+.legend-dot--out { background-color: var(--color-danger); }
+
+/* ── Today's Activity card: hero stat + compact rows ── */
+
+.dash-activity-card {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-lg);
+}
+
+.dash-activity-hero {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding-bottom: var(--space-lg);
+    margin-bottom: var(--space-md);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.dash-activity-hero-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-primary);
+    color: var(--color-text-inverse);
+    font-size: 1.8rem;
+    flex-shrink: 0;
+}
+
+.dash-activity-hero-value {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: var(--color-text);
+    line-height: 1;
+}
+
+.dash-activity-hero-label {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    margin-top: 0.2rem;
+}
+
+.dash-activity-rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    flex-grow: 1;
+    justify-content: center;
+}
+
+.dash-activity-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-sm) 0;
+}
+
+.dash-activity-row-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    color: var(--color-text-inverse);
+    flex-shrink: 0;
+}
+
+.dash-activity-row-icon--success { background-color: var(--color-success); }
+.dash-activity-row-icon--warning { background-color: var(--color-accent); }
+.dash-activity-row-icon--adjustment { background-color: var(--color-adjustment); }
+
+.dash-activity-row-label {
+    flex-grow: 1;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+}
+
+.dash-activity-row-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+/* ── Large chart card ── */
+
+.chart-card--large {
+    padding: var(--space-xl) var(--space-lg) var(--space-lg);
+}
+
+.chart-canvas-wrap {
+    position: relative;
+    height: 380px;
+    width: 100%;
+}
+
+@media (max-width: 600px) {
+    .chart-canvas-wrap {
+        height: 260px;
+    }
+}
