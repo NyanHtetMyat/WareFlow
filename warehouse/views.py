@@ -44,8 +44,10 @@ STOCK_STATUS_BADGE = {
 @staff_required
 def receive_goods(request):
     """
-    Staff-only page for recording inbound stock. On success, stays
-    on this page with a fresh empty form.
+    Staff-only page for recording inbound stock. Product uses a
+    searchable combobox; Location uses a Zone->Rack->Bin cascade
+    restricted only to REGISTERED locations (unrestricted by
+    Product) — see static/js/location_cascade.js.
     """
     if request.method == 'POST':
         form = ReceiveGoodsForm(request.POST)
@@ -64,16 +66,28 @@ def receive_goods(request):
     else:
         form = ReceiveGoodsForm()
 
+    product_options = [
+        {'id': p.id, 'sku': p.sku, 'name': p.name, 'supplier_name': p.supplier.name}
+        for p in Product.objects.select_related('supplier').order_by('sku')
+    ]
+
     return render(request, 'warehouse/receive_goods.html', {
         'form': form,
         'page_title': 'Receive Goods',
+        'product_options': product_options,
+        'location_tree': services.get_location_tree(),
+        'stock_lookup': services.get_product_location_quantity_map(),
     })
 
 
 @login_required
 @staff_required
 def dispatch_goods(request):
-    """Staff-only page for recording outbound stock."""
+    """
+    Staff-only page for recording outbound stock. Product-first
+    cascade: Zone/Rack/Bin stay locked until a Product is chosen,
+    then restricted to only that Product's current stock locations.
+    """
     if request.method == 'POST':
         form = DispatchGoodsForm(request.POST)
         if form.is_valid():
@@ -91,17 +105,31 @@ def dispatch_goods(request):
     else:
         form = DispatchGoodsForm()
 
+    product_options = [
+        {'id': p.id, 'sku': p.sku, 'name': p.name}
+        for p in services.get_stocked_products()
+    ]
+
     return render(request, 'warehouse/dispatch_goods.html', {
         'form': form,
         'page_title': 'Dispatch Goods',
-        'inventory_map': services.get_inventory_location_map(),
+        'product_options': product_options,
+        'inventory_tree': services.get_inventory_location_tree(),
     })
 
 
 @login_required
 @staff_required
 def submit_adjustment_request(request):
-    """Staff-only page for requesting a stock correction."""
+    """
+    Staff-only page for requesting a stock correction. Increase
+    mode behaves like Receive Goods (any Product, any registered
+    Location); Decrease mode behaves like Dispatch (Product-first,
+    restricted to that Product's current stock locations). Both
+    Product option sets and both Location trees are sent to the
+    page at once so switching modes is instant client-side — see
+    static/js/location_cascade.js.
+    """
     if request.method == 'POST':
         form = StockAdjustmentRequestForm(request.POST)
         if form.is_valid():
@@ -126,11 +154,18 @@ def submit_adjustment_request(request):
         .select_related('product', 'location')[:5]
     )
 
+    all_products = [{'id': p.id, 'sku': p.sku, 'name': p.name} for p in Product.objects.order_by('sku')]
+    stocked_products = [{'id': p.id, 'sku': p.sku, 'name': p.name} for p in services.get_stocked_products()]
+
     return render(request, 'warehouse/adjustment_request.html', {
         'form': form,
         'page_title': 'Stock Adjustment Request',
         'recent_requests': recent_requests,
-        'inventory_map': services.get_inventory_location_map(),
+        'increase_product_options': all_products,
+        'decrease_product_options': stocked_products,
+        'increase_location_tree': services.get_location_tree(),
+        'decrease_location_tree': services.get_inventory_location_tree(),
+        'stock_lookup': services.get_product_location_quantity_map(),
     })
 
 

@@ -17,47 +17,23 @@
 
     <div class="date-badge">
         <i class="bi bi-calendar3" aria-hidden="true"></i>
-        <span class="date-badge-label">Today :</span>
-        {% comment %} 
-            Plain text instead of {{ form.date }} — rendering the real
-            [input type="date"] reserved fixed native chrome width
-            regardless of CSS, which was the source of the blank
-            space. The form field itself still exists in forms.py
-            (disabled, unread server-side); this just stops it from
-            being drawn as an actual input element. 
-        {% endcomment %}
-        <span class="date-badge-value">{{ form.date.value|date:"d-M-Y" }}</span>
+        <span class="date-badge-label">Today</span>
+        <span class="date-badge-value">{{ form.date.value|date:"Y-m-d" }}</span>
     </div>
 </div>
 
 <div class="form-card">
-    <form method="post" novalidate>
+    <form method="post" novalidate id="receive-goods-form">
         {% csrf_token %}
+        {{ form.product }}
+        {{ form.location }}
 
         <div class="row">
             <div class="col-md-6">
-                <div class="form-field">
-                    <label for="id_product" class="form-field-label">
-                        <i class="bi bi-upc-scan" aria-hidden="true"></i> Product (SKU)
-                    </label>
-                    {% comment %} 
-                        Rendered manually (not {{ form.product }}) so each option
-                        can carry the data-autofill-value the Supplier field
-                        below reads from — see static/js/forms.js 
-                    {% endcomment %}
-                    <select name="product" id="id_product" class="form-select"
-                            data-autofill-source="supplier" data-autofill-target="id_supplier_display" required>
-                        <option value="">Select a product…</option>
-                        {% for product in form.fields.product.queryset %}
-                            <option value="{{ product.pk }}" data-autofill-value="{{ product.supplier.name }}">
-                                {{ product.sku }} — {{ product.name }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                    {% if form.product.errors %}
-                        <div class="text-danger small mt-1">{{ form.product.errors }}</div>
-                    {% endif %}
-                </div>
+                {% include "components/combobox_field.html" with field_id="product" icon="bi-upc-scan" label="Product (SKU)" placeholder="Search SKU or product name…" %}
+                {% if form.product.errors %}
+                    <div class="text-danger small mt-1">{{ form.product.errors }}</div>
+                {% endif %}
             </div>
 
             <div class="col-md-6">
@@ -72,19 +48,31 @@
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-field">
-                    <label for="{{ form.location.id_for_label }}" class="form-field-label">
-                        <i class="bi bi-geo-alt" aria-hidden="true"></i> Location
-                    </label>
-                    {{ form.location }}
-                    {% if form.location.errors %}
-                        <div class="text-danger small mt-1">{{ form.location.errors }}</div>
-                    {% endif %}
+        <div class="form-field">
+            <label class="form-field-label">
+                <i class="bi bi-geo-alt" aria-hidden="true"></i> Location
+            </label>
+            <div class="row">
+                <div class="col-md-4">
+                    {% include "components/combobox_field.html" with field_id="zone" icon="bi-flag" label="Zone" placeholder="Search zone…" %}
+                    <input type="hidden" id="zone_value">
+                </div>
+                <div class="col-md-4">
+                    {% include "components/combobox_field.html" with field_id="rack" icon="bi-grid-3x3-gap" label="Rack" placeholder="Search rack…" %}
+                    <input type="hidden" id="rack_value">
+                </div>
+                <div class="col-md-4">
+                    {% include "components/combobox_field.html" with field_id="bin" icon="bi-archive" label="Bin" placeholder="Search bin…" %}
+                    <input type="hidden" id="bin_value">
                 </div>
             </div>
+            {% if form.location.errors %}
+                <div class="text-danger small mt-1">{{ form.location.errors }}</div>
+            {% endif %}
+            <div class="form-text" id="stock-info"></div>
+        </div>
 
+        <div class="row">
             <div class="col-md-6">
                 <div class="form-field form-field--quantity">
                     <label for="{{ form.quantity.id_for_label }}" class="form-field-label">
@@ -105,8 +93,32 @@
         </div>
     </form>
 </div>
+
+{{ product_options|json_script:"product-options-data" }}
+{{ location_tree|json_script:"location-tree-data" }}
+{{ stock_lookup|json_script:"stock-lookup-data" }}
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/forms.js' %}"></script>
+<script src="{% static 'js/combobox.js' %}"></script>
+<script src="{% static 'js/location_cascade.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var productOptions = JSON.parse(document.getElementById('product-options-data').textContent);
+    var locationTree = JSON.parse(document.getElementById('location-tree-data').textContent);
+    var stockLookup = JSON.parse(document.getElementById('stock-lookup-data').textContent);
+    var supplierDisplay = document.getElementById('id_supplier_display');
+
+    createLocationCascade({
+        productFirst: false,
+        productOptions: productOptions,
+        locationTree: locationTree,
+        stockLookup: stockLookup,
+        stockInfoId: 'stock-info',
+        onProductSelect: function (opt) {
+            supplierDisplay.value = opt ? (opt.supplierName || '—') : '—';
+        },
+    });
+});
+</script>
 {% endblock %}

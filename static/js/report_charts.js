@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             },
                             label: function (item) {
                                 var raw = item.raw._data;
-                                return raw.value + ' SKUs (' + raw.pct + '%)';
+                                return ' ' + raw.value + ' SKUs out of ' + treemapData.total_sku + ' (' + raw.pct + '%)';
                             },
                         },
                     },

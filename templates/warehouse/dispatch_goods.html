@@ -17,66 +17,48 @@
 
     <div class="date-badge">
         <i class="bi bi-calendar3" aria-hidden="true"></i>
-        <span class="date-badge-label">Today :</span>
-        {% comment %} 
-            Plain text instead of {{ form.date }} — rendering the real
-            [input type="date"] reserved fixed native chrome width
-            regardless of CSS, which was the source of the blank
-            space. The form field itself still exists in forms.py
-            (disabled, unread server-side); this just stops it from
-            being drawn as an actual input element. 
-        {% endcomment %}
-        <span class="date-badge-value">{{ form.date.value|date:"d-M-Y" }}</span>
+        <span class="date-badge-label">Today</span>
+        <span class="date-badge-value">{{ form.date.value|date:"Y-m-d" }}</span>
     </div>
 </div>
 
 <div class="form-card">
-    <form method="post" novalidate>
+    <form method="post" novalidate id="dispatch-goods-form">
         {% csrf_token %}
+        {{ form.product }}
+        {{ form.location }}
 
         <div class="row">
             <div class="col-md-6">
-                <div class="form-field">
-                    <label for="id_product" class="form-field-label">
-                        <i class="bi bi-upc-scan" aria-hidden="true"></i> Product (SKU)
-                    </label>
-                    {% comment %}
-                        Only products that currently have stock somewhere are
-                        offered — Dispatch can only remove EXISTING inventory,
-                        never invent a new stock position. See
-                        DispatchGoodsForm.__init__ in forms.py.
-                    {% endcomment %}
-                    <select name="product" id="id_product" class="form-select" required>
-                        <option value="">Select a product…</option>
-                        {% for product in form.fields.product.queryset %}
-                            <option value="{{ product.pk }}">{{ product.sku }} — {{ product.name }}</option>
-                        {% endfor %}
-                    </select>
-                    {% if form.product.errors %}
-                        <div class="text-danger small mt-1">{{ form.product.errors }}</div>
-                    {% endif %}
-                </div>
+                {% include "components/combobox_field.html" with field_id="product" icon="bi-upc-scan" label="Product (SKU)" placeholder="Search SKU or product name…" %}
+                {% if form.product.errors %}
+                    <div class="text-danger small mt-1">{{ form.product.errors }}</div>
+                {% endif %}
             </div>
+        </div>
 
-            <div class="col-md-6">
-                <div class="form-field">
-                    <label for="id_location" class="form-field-label">
-                        <i class="bi bi-geo-alt" aria-hidden="true"></i> Location
-                    </label>
-                    {% comment %} 
-                        Populated dynamically by inventory_chain.js once a
-                        Product is chosen above — starts disabled since
-                        there's nothing valid to show until then.
-                    {% endcomment %}
-                    <select name="location" id="id_location" class="form-select" disabled required>
-                        <option value="">Select a product first…</option>
-                    </select>
-                    {% if form.location.errors %}
-                        <div class="text-danger small mt-1">{{ form.location.errors }}</div>
-                    {% endif %}
-                    <div class="form-text" id="stock-info"></div>
+        <div class="form-field">
+            <label class="form-field-label">
+                <i class="bi bi-geo-alt" aria-hidden="true"></i> Location
+            </label>
+            <div class="row">
+                <div class="col-md-4">
+                    {% include "components/combobox_field.html" with field_id="zone" icon="bi-flag" label="Zone" placeholder="Select a product first…" %}
+                    <input type="hidden" id="zone_value">
+                </div>
+                <div class="col-md-4">
+                    {% include "components/combobox_field.html" with field_id="rack" icon="bi-grid-3x3-gap" label="Rack" placeholder="Search rack…" %}
+                    <input type="hidden" id="rack_value">
+                </div>
+                <div class="col-md-4">
+                    {% include "components/combobox_field.html" with field_id="bin" icon="bi-archive" label="Bin" placeholder="Search bin…" %}
+                    <input type="hidden" id="bin_value">
                 </div>
             </div>
+            {% if form.location.errors %}
+                <div class="text-danger small mt-1">{{ form.location.errors }}</div>
+            {% endif %}
+            <div class="form-text" id="stock-info"></div>
         </div>
 
         <div class="row">
@@ -101,9 +83,24 @@
     </form>
 </div>
 
-{{ inventory_map|json_script:"inventory-map-data" }}
+{{ product_options|json_script:"product-options-data" }}
+{{ inventory_tree|json_script:"inventory-tree-data" }}
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/inventory_chain.js' %}"></script>
+<script src="{% static 'js/combobox.js' %}"></script>
+<script src="{% static 'js/location_cascade.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var productOptions = JSON.parse(document.getElementById('product-options-data').textContent);
+    var inventoryTree = JSON.parse(document.getElementById('inventory-tree-data').textContent);
+
+    createLocationCascade({
+        productFirst: true,
+        productOptions: productOptions,
+        locationTree: inventoryTree,
+        stockInfoId: 'stock-info',
+    });
+});
+</script>
 {% endblock %}

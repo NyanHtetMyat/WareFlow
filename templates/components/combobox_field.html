@@ -1,0 +1,21 @@
+{% comment %}
+  Reusable searchable-dropdown field. Usage:
+  {% include "components/combobox_field.html" with field_id="product" icon="bi-upc-scan" label="Product (SKU)" placeholder="Search SKU or product name…" %}
+  Wired up by static/js/combobox.js + location_cascade.js, which
+  look up elements by "{{ field_id }}_combobox" — this template
+  only renders the visual shell, not the value-holding hidden input
+  (that's provided separately per field, see the pages using this).
+{% endcomment %}
+<div class="form-field">
+    <label for="{{ field_id }}_input" class="form-field-label">
+        <i class="bi {{ icon }}" aria-hidden="true"></i> {{ label }}
+    </label>
+    <div class="combobox" id="{{ field_id }}_combobox">
+        <div class="combobox-control">
+            <i class="bi bi-search combobox-icon" aria-hidden="true"></i>
+            <input type="text" id="{{ field_id }}_input" class="combobox-input" autocomplete="off" placeholder="{{ placeholder }}">
+            <i class="bi bi-chevron-down combobox-caret" aria-hidden="true"></i>
+        </div>
+        <div class="combobox-panel" hidden></div>
+    </div>
+</div>

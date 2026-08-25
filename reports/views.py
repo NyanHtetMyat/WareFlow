@@ -162,6 +162,7 @@ def _category_report():
             'labels': [row['name'] for row in sku_counts],
             'values': [row['sku_count'] for row in sku_counts],
             'percentages': [round(row['sku_count'] / total_skus * 100, 1) for row in sku_counts],
+            'total_sku': total_skus,
         },
     }
 

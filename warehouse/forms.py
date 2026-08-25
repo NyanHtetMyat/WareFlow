@@ -16,20 +16,19 @@ from .models import Category, Location, Product, Supplier
 
 class ReceiveGoodsForm(forms.Form):
     """
-    Staff-facing form for logging inbound stock.
-
-    Product choices intentionally include EVERY product in the
-    catalog, including ones with no Inventory yet — receiving is the
-    operation that creates a product's first Inventory row.
+    Product and Location are now hidden fields — the visible
+    searchable Product combobox and Zone->Rack->Bin cascade
+    (static/js/location_cascade.js) write into these directly.
+    Django-level validation is unchanged: still a real
+    ModelChoiceField, still rejects an invalid/tampered id.
     """
-
     product = forms.ModelChoiceField(
         queryset=Product.objects.select_related('supplier').all(),
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.HiddenInput(attrs={'id': 'id_product'}),
     )
     location = forms.ModelChoiceField(
         queryset=Location.objects.all(),
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.HiddenInput(attrs={'id': 'id_location'}),
     )
     quantity = forms.IntegerField(
         min_value=1,
@@ -43,19 +42,14 @@ class ReceiveGoodsForm(forms.Form):
 
 
 class DispatchGoodsForm(forms.Form):
-    """
-    Staff-facing form for logging outbound stock. Product queryset
-    restricted in __init__ (not as a class-level default) so it's
-    refetched fresh on every request rather than once at startup.
-    """
-
+    """Product-first cascade — see location_cascade.js's productFirst mode."""
     product = forms.ModelChoiceField(
         queryset=Product.objects.none(),
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.HiddenInput(attrs={'id': 'id_product'}),
     )
     location = forms.ModelChoiceField(
         queryset=Location.objects.all(),
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.HiddenInput(attrs={'id': 'id_location'}),
     )
     quantity = forms.IntegerField(
         min_value=1,
@@ -74,17 +68,21 @@ class DispatchGoodsForm(forms.Form):
 
 class StockAdjustmentRequestForm(forms.Form):
     """
-    Staff-facing form for requesting a stock correction. Same
-    Product-choice restriction as DispatchGoodsForm.
+    product/location querysets stay intentionally broad
+    (Product.objects.all() / Location.objects.all()) regardless of
+    Increase/Decrease mode — the frontend combobox only OFFERS the
+    mode-appropriate subset, but Django must still accept whichever
+    of the two subsets was actually shown. The authoritative
+    per-mode rule (does this pair have existing inventory?) is
+    enforced in services.submit_adjustment_request(), not here.
     """
-
     product = forms.ModelChoiceField(
-        queryset=Product.objects.none(),
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        queryset=Product.objects.all(),
+        widget=forms.HiddenInput(attrs={'id': 'id_product'}),
     )
     location = forms.ModelChoiceField(
         queryset=Location.objects.all(),
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.HiddenInput(attrs={'id': 'id_location'}),
     )
     quantity_change = forms.IntegerField(
         widget=forms.HiddenInput(attrs={'id': 'id_quantity_change'}),
@@ -97,10 +95,6 @@ class StockAdjustmentRequestForm(forms.Form):
             'placeholder': 'Explain the discrepancy — e.g. "Damaged in transit, 3 units unsellable."',
         }),
     )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['product'].queryset = services.get_stocked_products()
 
     def clean_quantity_change(self):
         value = self.cleaned_data['quantity_change']
