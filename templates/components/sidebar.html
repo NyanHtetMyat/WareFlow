@@ -130,38 +130,17 @@
         </li>
 
         <li class="nav-item">
-            <a href="{% url 'warehouse:product_list' %}"
-               class="nav-link {% if request.resolver_match.url_name == 'product_list' %}active{% endif %}"
-               title="Products">
-                <i class="bi bi-tags nav-icon" aria-hidden="true"></i>
-                <span class="nav-label">Products</span>
-            </a>
-        </li>
-
-        <li class="nav-item">
-            <a href="{% url 'warehouse:supplier_list' %}"
-               class="nav-link {% if request.resolver_match.url_name == 'supplier_list' %}active{% endif %}"
-               title="Suppliers">
-                <i class="bi bi-truck nav-icon" aria-hidden="true"></i>
-                <span class="nav-label">Suppliers</span>
-            </a>
-        </li>
-        
-        <li class="nav-item">
-            <a href="{% url 'warehouse:category_list' %}"
-               class="nav-link {% if request.resolver_match.url_name == 'category_list' %}active{% endif %}"
-               title="Categories">
-                <i class="bi bi-bookmark nav-icon" aria-hidden="true"></i>
-                <span class="nav-label">Categories</span>
-            </a>
-        </li>
-
-        <li class="nav-item">
-            <a href="{% url 'warehouse:location_list' %}"
-               class="nav-link {% if request.resolver_match.url_name == 'location_list' %}active{% endif %}"
-               title="Locations">
-                <i class="bi bi-geo-alt nav-icon" aria-hidden="true"></i>
-                <span class="nav-label">Locations</span>
+            {% comment %}
+                Active state covers the hub AND all 4 sub-pages, so
+                the sidebar still shows "you're in this area" no
+                matter how deep the user has drilled in — just not
+                pointing at 4 separate top-level nav items anymore.
+            {% endcomment %}
+            <a href="{% url 'warehouse:master_data' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'master_data' or request.resolver_match.url_name == 'product_list' or request.resolver_match.url_name == 'supplier_list' or request.resolver_match.url_name == 'category_list' or request.resolver_match.url_name == 'location_list' %}active{% endif %}"
+               title="Master Data">
+                <i class="bi bi-grid-3x3-gap nav-icon" aria-hidden="true"></i>
+                <span class="nav-label">Master Data</span>
             </a>
         </li>
 

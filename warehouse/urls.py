@@ -23,6 +23,8 @@ urlpatterns = [
     path('adjustments/<int:pk>/approve/', views.approve_adjustment_request, name='approve_adjustment_request'),
     path('adjustments/<int:pk>/reject/', views.reject_adjustment_request, name='reject_adjustment_request'),
 
+    path('master-data/', views.master_data, name='master_data'),
+
     path('products/', views.product_list, name='product_list'),
     path('products/create/', views.product_create, name='product_create'),
     path('products/<int:pk>/edit/', views.product_edit, name='product_edit'),

@@ -47,6 +47,20 @@ ASSUMPTION / PROVISIONAL DESIGN DECISION:
     {% if page_title and page_title != "Dashboard" %}
         <a href="{% url 'accounts:dashboard_redirect' %}" class="breadcrumb-link">Warehouse</a>
         <span class="breadcrumb-separator">&gt;</span>
+
+        {% comment %}
+            Optional middle segment for genuinely nested pages —
+            currently only set by the 4 Master Data sub-pages
+            (Products/Suppliers/Categories/Locations). Left as two
+            plain context variables rather than a generic
+            auto-deriving breadcrumb system, since exactly one
+            parent case exists right now.
+        {% endcomment %}
+        {% if breadcrumb_parent_label %}
+            <a href="{% url breadcrumb_parent_url_name %}" class="breadcrumb-link">{{ breadcrumb_parent_label }}</a>
+            <span class="breadcrumb-separator">&gt;</span>
+        {% endif %}
+
         <span class="breadcrumb-current">{{ page_title }}</span>
     {% else %}
         <span class="breadcrumb-current">Dashboard</span>

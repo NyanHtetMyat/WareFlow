@@ -258,6 +258,21 @@ def inventory_list(request):
 
 @login_required
 @manager_required
+def master_data(request):
+    """
+    Manager-only navigation hub linking to the four master-data
+    management pages. Consolidating Products/Suppliers/Categories/
+    Locations behind one sidebar entry (instead of four separate
+    top-level items) is what keeps the Manager sidebar short enough
+    that Logout never gets pushed below the visible viewport.
+    """
+    return render(request, 'warehouse/master_data.html', {
+        'page_title': 'Master Data',
+    })
+
+
+@login_required
+@manager_required
 def product_list(request):
     """Manager-only Product Management: search/filter/sort, create, edit."""
     search_query = request.GET.get('q', '').strip()
@@ -332,6 +347,8 @@ def product_list(request):
 
     return render(request, 'warehouse/products.html', {
         'page_title': 'Products',
+        'breadcrumb_parent_label': 'Master Data',
+        'breadcrumb_parent_url_name': 'warehouse:master_data',
         'products': products,
         'categories': Category.objects.all(),
         'suppliers': Supplier.objects.all(),
@@ -416,6 +433,8 @@ def supplier_list(request):
 
     return render(request, 'warehouse/suppliers.html', {
         'page_title': 'Suppliers',
+        'breadcrumb_parent_label': 'Master Data',
+        'breadcrumb_parent_url_name': 'warehouse:master_data',
         'suppliers': suppliers,
         'search_query': search_query,
         'sort': sort_field,
@@ -492,6 +511,8 @@ def category_list(request):
 
     return render(request, 'warehouse/categories.html', {
         'page_title': 'Categories',
+        'breadcrumb_parent_label': 'Master Data',
+        'breadcrumb_parent_url_name': 'warehouse:master_data',
         'categories': categories,
         'search_query': search_query,
         'sort': sort_field,
@@ -590,6 +611,8 @@ def location_list(request):
 
     return render(request, 'warehouse/locations.html', {
         'page_title': 'Locations',
+        'breadcrumb_parent_label': 'Master Data',
+        'breadcrumb_parent_url_name': 'warehouse:master_data',
         'locations': locations,
         'search_query': search_query,
         'sort': sort_field,

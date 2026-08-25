@@ -1,0 +1,40 @@
+{% extends "layouts/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Master Data — WareFlow{% endblock %}
+
+{% block dashboard_content %}
+<div class="form-page-header">
+    <div class="form-page-heading">
+        <div class="form-page-icon form-page-icon--adjustment">
+            <i class="bi bi-grid-3x3-gap" aria-hidden="true"></i>
+        </div>
+        <div>
+            <h1 class="form-page-title">Master Data</h1>
+            <p class="form-page-subtitle">Core catalog data warehouse operations rely on</p>
+        </div>
+    </div>
+</div>
+
+<div class="master-data-grid">
+    <a href="{% url 'warehouse:product_list' %}" class="master-data-card master-data-card--primary">
+        <div class="master-data-card-icon"><i class="bi bi-tags" aria-hidden="true"></i></div>
+        <div class="master-data-card-title">Products</div>
+    </a>
+
+    <a href="{% url 'warehouse:supplier_list' %}" class="master-data-card master-data-card--success">
+        <div class="master-data-card-icon"><i class="bi bi-truck" aria-hidden="true"></i></div>
+        <div class="master-data-card-title">Suppliers</div>
+    </a>
+
+    <a href="{% url 'warehouse:category_list' %}" class="master-data-card master-data-card--warning">
+        <div class="master-data-card-icon"><i class="bi bi-bookmark" aria-hidden="true"></i></div>
+        <div class="master-data-card-title">Categories</div>
+    </a>
+
+    <a href="{% url 'warehouse:location_list' %}" class="master-data-card master-data-card--adjustment">
+        <div class="master-data-card-icon"><i class="bi bi-geo-alt" aria-hidden="true"></i></div>
+        <div class="master-data-card-title">Locations</div>
+    </a>
+</div>
+{% endblock %}
