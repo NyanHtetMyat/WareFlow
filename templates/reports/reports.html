@@ -1,0 +1,227 @@
+{% extends "layouts/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Reports — WareFlow{% endblock %}
+
+{% block dashboard_content %}
+<div class="form-page-header">
+    <div class="form-page-heading">
+        <div class="form-page-icon form-page-icon--adjustment">
+            <i class="bi bi-bar-chart" aria-hidden="true"></i>
+        </div>
+        <div>
+            <h1 class="form-page-title">Reports</h1>
+            <p class="form-page-subtitle">Historical analysis and trends across warehouse activity</p>
+        </div>
+    </div>
+</div>
+
+<div class="list-toolbar">
+    <div class="report-tabs">
+        <a href="?tab=activity&range={{ range_preset }}&start={{ range_start|date:'Y-m-d' }}&end={{ range_end|date:'Y-m-d' }}" class="report-tab {% if tab == 'activity' %}active{% endif %}">
+            <i class="bi bi-graph-up" aria-hidden="true"></i> Activity
+        </a>
+        <a href="?tab=products&range={{ range_preset }}&start={{ range_start|date:'Y-m-d' }}&end={{ range_end|date:'Y-m-d' }}" class="report-tab {% if tab == 'products' %}active{% endif %}">
+            <i class="bi bi-tags" aria-hidden="true"></i> Products
+        </a>
+        <a href="?tab=categories&range={{ range_preset }}&start={{ range_start|date:'Y-m-d' }}&end={{ range_end|date:'Y-m-d' }}" class="report-tab {% if tab == 'categories' %}active{% endif %}">
+            <i class="bi bi-bookmark" aria-hidden="true"></i> Categories
+        </a>
+        <a href="?tab=locations&range={{ range_preset }}&start={{ range_start|date:'Y-m-d' }}&end={{ range_end|date:'Y-m-d' }}" class="report-tab {% if tab == 'locations' %}active{% endif %}">
+            <i class="bi bi-geo-alt" aria-hidden="true"></i> Locations
+        </a>
+        <a href="?tab=adjustments&range={{ range_preset }}&start={{ range_start|date:'Y-m-d' }}&end={{ range_end|date:'Y-m-d' }}" class="report-tab {% if tab == 'adjustments' %}active{% endif %}">
+            <i class="bi bi-arrow-left-right" aria-hidden="true"></i> Adjustments
+        </a>
+    </div>
+
+    <form method="get" class="list-filter-form report-range-form">
+        <input type="hidden" name="tab" value="{{ tab }}">
+
+        <select name="range" id="id_range" class="form-select">
+            <option value="today" {% if range_preset == "today" %}selected{% endif %}>Today</option>
+            <option value="7d" {% if range_preset == "7d" %}selected{% endif %}>Last 7 Days</option>
+            <option value="30d" {% if range_preset == "30d" %}selected{% endif %}>Last 30 Days</option>
+            <option value="this_month" {% if range_preset == "this_month" %}selected{% endif %}>This Month</option>
+            <option value="last_month" {% if range_preset == "last_month" %}selected{% endif %}>Last Month</option>
+            <option value="custom" {% if range_preset == "custom" %}selected{% endif %}>Custom Range</option>
+        </select>
+
+        <div class="date-filter-group" id="range-start-group">
+            <span class="date-filter-label">From</span>
+            <input type="date" name="start" value="{{ range_start|date:'Y-m-d' }}" class="form-control">
+        </div>
+        <div class="date-filter-group" id="range-end-group">
+            <span class="date-filter-label">To</span>
+            <input type="date" name="end" value="{{ range_end|date:'Y-m-d' }}" class="form-control">
+        </div>
+
+        <button type="submit" class="btn btn-adjustment">
+            <i class="bi bi-funnel" aria-hidden="true"></i> Apply
+        </button>
+    </form>
+</div>
+
+{% if tab == "activity" %}
+    <div class="report-metric-row">
+        <div class="report-metric">
+            <div class="report-metric-value report-metric-value--success">{{ report.metrics.received }}</div>
+            <div class="report-metric-label">Units Received</div>
+        </div>
+        <div class="report-metric">
+            <div class="report-metric-value report-metric-value--warning">{{ report.metrics.dispatched }}</div>
+            <div class="report-metric-label">Units Dispatched</div>
+        </div>
+        <div class="report-metric">
+            <div class="report-metric-value {% if report.metrics.net >= 0 %}report-metric-value--success{% else %}report-metric-value--danger{% endif %}">
+                {% if report.metrics.net > 0 %}+{% endif %}{{ report.metrics.net }}
+            </div>
+            <div class="report-metric-label">Net Stock Movement</div>
+        </div>
+    </div>
+
+    <h2 class="dashboard-section-label dashboard-section-label--first">Received vs Dispatched Over Time</h2>
+    <div class="chart-card chart-card--large">
+        <div class="chart-canvas-wrap">
+            <canvas id="activityTrendChart"></canvas>
+        </div>
+    </div>
+    {{ report.chart|json_script:"activity-chart-data" }}
+
+{% elif tab == "products" %}
+    <div class="report-metric-row">
+        <div class="report-metric">
+            <div class="report-metric-value report-metric-value--success">{{ report.metrics.products_received }}</div>
+            <div class="report-metric-label">Distinct Products Received</div>
+        </div>
+        <div class="report-metric">
+            <div class="report-metric-value report-metric-value--warning">{{ report.metrics.products_dispatched }}</div>
+            <div class="report-metric-label">Distinct Products Dispatched</div>
+        </div>
+    </div>
+
+    <div class="report-chart-grid">
+        <div>
+            <h2 class="dashboard-section-label dashboard-section-label--first">Top 5 Most Received</h2>
+            <div class="chart-card">
+                <div class="chart-canvas-wrap" style="height: 280px;">
+                    <canvas id="topReceivedChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div>
+            <h2 class="dashboard-section-label dashboard-section-label--first">Top 5 Most Dispatched</h2>
+            <div class="chart-card">
+                <div class="chart-canvas-wrap" style="height: 280px;">
+                    <canvas id="topDispatchedChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{ report.most_received|json_script:"top-received-data" }}
+    {{ report.most_dispatched|json_script:"top-dispatched-data" }}
+
+{% elif tab == "categories" %}
+    <div class="report-metric-row">
+        <div class="report-metric">
+            <div class="report-metric-value report-metric-value--adjustment">{{ report.metrics.category_count }}</div>
+            <div class="report-metric-label">Categories Tracked</div>
+        </div>
+        <div class="report-metric">
+            <div class="report-metric-value">{{ report.metrics.top_category }}</div>
+            <div class="report-metric-label">Most Stocked Category</div>
+        </div>
+    </div>
+
+    <h2 class="dashboard-section-label dashboard-section-label--first">Product Catalog Share by Category</h2>
+    <p class="report-chart-note">Share of distinct product SKUs per category (not physical stock units) — a catalog composition view, not affected by the selected date range.</p>
+    <div class="chart-card chart-card--large">
+        <div class="chart-canvas-wrap">
+            <canvas id="categoryTreemapChart"></canvas>
+        </div>
+    </div>
+    {{ report.treemap_chart|json_script:"category-treemap-data" }}
+
+{% elif tab == "locations" %}
+    <div class="report-metric-row">
+        <div class="report-metric">
+            <div class="report-metric-value report-metric-value--success">{{ report.metrics.locations_used }}</div>
+            <div class="report-metric-label">Locations In Use</div>
+        </div>
+        <div class="report-metric">
+            <div class="report-metric-value">{{ report.metrics.total_locations }}</div>
+            <div class="report-metric-label">Total Locations</div>
+        </div>
+    </div>
+
+    <h2 class="dashboard-section-label dashboard-section-label--first">Top 10 Locations by Current Stock</h2>
+    <p class="report-chart-note">Reflects current stock — not affected by the selected date range.</p>
+    <div class="chart-card chart-card--large">
+        <div class="chart-canvas-wrap">
+            <canvas id="topLocationsChart"></canvas>
+        </div>
+    </div>
+    {{ report.chart|json_script:"top-locations-data" }}
+
+{% elif tab == "adjustments" %}
+    <h2 class="dashboard-section-label dashboard-section-label--first">Request Status</h2>
+    <div class="report-metric-row">
+        <div class="report-metric">
+            <div class="report-metric-value">{{ report.metrics.total }}</div>
+            <div class="report-metric-label">Total Requests</div>
+        </div>
+        <div class="report-metric">
+            <div class="report-metric-value report-metric-value--warning">{{ report.metrics.pending }}</div>
+            <div class="report-metric-label">Pending</div>
+        </div>
+        <div class="report-metric">
+            <div class="report-metric-value report-metric-value--success">{{ report.metrics.approved }}</div>
+            <div class="report-metric-label">Approved</div>
+        </div>
+        <div class="report-metric">
+            <div class="report-metric-value report-metric-value--danger">{{ report.metrics.rejected }}</div>
+            <div class="report-metric-label">Rejected</div>
+        </div>
+    </div>
+
+    <h2 class="dashboard-section-label">Request Type</h2>
+    <div class="report-metric-row report-metric-row--compact">
+        <div class="report-metric">
+            <div class="report-metric-value report-metric-value--success">{{ report.metrics.increases }}</div>
+            <div class="report-metric-label">Increase Requests</div>
+        </div>
+        <div class="report-metric">
+            <div class="report-metric-value report-metric-value--danger">{{ report.metrics.decreases }}</div>
+            <div class="report-metric-label">Decrease Requests</div>
+        </div>
+    </div>
+
+    <div class="report-chart-grid">
+        <div>
+            <h2 class="dashboard-section-label dashboard-section-label--first">Status Distribution</h2>
+            <div class="chart-card">
+                <div class="chart-canvas-wrap" style="height: 280px;">
+                    <canvas id="adjustmentStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div>
+            <h2 class="dashboard-section-label dashboard-section-label--first">Requests Submitted Over Time</h2>
+            <div class="chart-card">
+                <div class="chart-canvas-wrap" style="height: 280px;">
+                    <canvas id="adjustmentTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{ report.status_chart|json_script:"adjustment-status-data" }}
+    {{ report.trend_chart|json_script:"adjustment-trend-data" }}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-treemap@2/dist/chartjs-chart-treemap.min.js"></script>
+<script src="{% static 'js/report_filters.js' %}"></script>
+<script src="{% static 'js/report_charts.js' %}"></script>
+{% endblock %}

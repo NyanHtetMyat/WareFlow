@@ -7,14 +7,12 @@ coordinate the two and handle the HTTP request/response cycle.
 """
 
 import json
-from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models import Count, F, Q, Sum
-from django.db.models.functions import TruncDate
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
@@ -726,32 +724,6 @@ def manager_dashboard(request):
     ).count()
     total_products = Product.objects.count()
 
-    # ── 7-day Received vs Dispatched trend for the single chart ──
-    days = [today - timedelta(days=offset) for offset in range(6, -1, -1)]
-    daily_rows = (
-        AuditLog.objects
-        .filter(timestamp__date__gte=days[0], action_type__in=[AuditLog.ActionType.INBOUND, AuditLog.ActionType.OUTBOUND])
-        .annotate(day=TruncDate('timestamp'))
-        .values('day', 'action_type')
-        .annotate(total=Sum('quantity_shift'))
-    )
-
-    received_by_day = {d: 0 for d in days}
-    dispatched_by_day = {d: 0 for d in days}
-    for row in daily_rows:
-        if row['day'] not in received_by_day:
-            continue
-        if row['action_type'] == AuditLog.ActionType.INBOUND:
-            received_by_day[row['day']] = row['total']
-        else:
-            dispatched_by_day[row['day']] = abs(row['total'])
-
-    chart_data = {
-        'labels': [d.strftime('%b %d') for d in days],
-        'received': [received_by_day[d] for d in days],
-        'dispatched': [dispatched_by_day[d] for d in days],
-    }
-
     return render(request, 'warehouse/manager_dashboard.html', {
         'page_title': 'Dashboard',
         'stock_counts': stock_counts,
@@ -761,5 +733,4 @@ def manager_dashboard(request):
             'dispatched_today': dispatched_today,
             'pending_count': pending_count,
         },
-        'chart_data': chart_data,
     })

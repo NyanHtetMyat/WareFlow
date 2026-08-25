@@ -1097,3 +1097,110 @@
         height: 260px;
     }
 }
+
+/* ═══════════════════ REPORTS PAGE ═══════════════════ */
+
+.report-tabs {
+    display: flex;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-md);
+}
+
+.report-tab {
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.report-tab:hover {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+}
+
+.report-tab.active {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-text-inverse);
+}
+
+.report-range-form {
+    align-items: center;
+}
+
+/* Compact horizontal metric strip — Reports' own visual identity,
+   deliberately distinct from .stat-card (management pages) and the
+   Dashboard's bespoke hero/gauge cards. */
+.report-metric-row {
+    display: flex;
+    flex-wrap: wrap;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--space-lg);
+    overflow: hidden;
+}
+
+.report-metric {
+    flex: 1 1 150px;
+    padding: var(--space-lg);
+    text-align: center;
+    border-right: 1px solid var(--color-border);
+}
+
+.report-metric:last-child {
+    border-right: none;
+}
+
+.report-metric-value {
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: var(--color-text);
+    line-height: 1;
+}
+
+.report-metric-value--success { color: var(--color-success); }
+.report-metric-value--warning { color: var(--color-accent); }
+.report-metric-value--danger { color: var(--color-danger); }
+.report-metric-value--adjustment { color: var(--color-adjustment); }
+
+.report-metric-label {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin-top: 0.3rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.report-chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-lg);
+}
+
+@media (max-width: 900px) {
+    .report-chart-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.report-chart-note {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    font-style: italic;
+    margin: -0.5rem 0 var(--space-sm);
+}
+
+/* Two-item metric rows (e.g. Increase/Decrease) shouldn't stretch
+   to the same full width as a 4-6 item row — this keeps a smaller
+   group visually proportionate instead of looking sparse. */
+.report-metric-row--compact {
+    max-width: 420px;
+}
