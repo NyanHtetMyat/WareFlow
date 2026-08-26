@@ -1,21 +1,30 @@
 {% comment %}
-  Reusable searchable-dropdown field. Usage:
-  {% include "components/combobox_field.html" with field_id="product" icon="bi-upc-scan" label="Product (SKU)" placeholder="Search SKU or product name…" %}
-  Wired up by static/js/combobox.js + location_cascade.js, which
-  look up elements by "{{ field_id }}_combobox" — this template
-  only renders the visual shell, not the value-holding hidden input
-  (that's provided separately per field, see the pages using this).
+  Reusable searchable-dropdown field.
+
+  IMPORTANT: show_label and show_search_icon must be passed
+  EXPLICITLY by every caller (True or False) — do not rely on a
+  default. Django's |default: filter treats explicit False the same
+  as "not provided" and silently substitutes the fallback, which
+  previously caused Zone/Rack/Bin to keep rendering as if these
+  flags were never set to False at all. Being explicit here is the
+  actual fix, not a style preference.
+
+  Usage (Product — full field, own label+icon+search icon):
+    {% include "components/combobox_field.html" with field_id="product" icon="bi-upc-scan" label="Product (SKU)" placeholder="Search SKU or product name…" show_label=True show_search_icon=True %}
+
+  Usage (Zone/Rack/Bin — bare combobox only, no label, no icon):
+    {% include "components/combobox_field.html" with field_id="zone" placeholder="Zone…" show_label=False show_search_icon=False %}
 {% endcomment %}
-<div class="form-field">
+{% if show_label %}<div class="form-field">
     <label for="{{ field_id }}_input" class="form-field-label">
         <i class="bi {{ icon }}" aria-hidden="true"></i> {{ label }}
-    </label>
+    </label>{% endif %}
     <div class="combobox" id="{{ field_id }}_combobox">
         <div class="combobox-control">
-            <i class="bi bi-search combobox-icon" aria-hidden="true"></i>
+            {% if show_search_icon %}<i class="bi bi-search combobox-icon" aria-hidden="true"></i>{% endif %}
             <input type="text" id="{{ field_id }}_input" class="combobox-input" autocomplete="off" placeholder="{{ placeholder }}">
             <i class="bi bi-chevron-down combobox-caret" aria-hidden="true"></i>
         </div>
         <div class="combobox-panel" hidden></div>
     </div>
-</div>
+{% if show_label %}</div>{% endif %}

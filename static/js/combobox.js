@@ -23,7 +23,7 @@ class Combobox {
         this.input = rootEl.querySelector('.combobox-input');
         this.panel = rootEl.querySelector('.combobox-panel');
         this.placeholder = (config && config.placeholder) || 'Select…';
-        this.lockedPlaceholder = (config && config.lockedPlaceholder) || 'Unavailable';
+        this.lockedMessage = (config && config.lockedMessage) || 'Unavailable';
         this.onChange = (config && config.onChange) || function () {};
 
         this.options = [];
@@ -31,8 +31,29 @@ class Combobox {
         this.activeIndex = -1;
         this.locked = false;
 
+        // Placeholder is set ONCE here and never touched again by
+        // lock()/unlock() below — it always reads "Zone…"/"Rack…"/
+        // "Bin…" regardless of lock state. The locked-state
+        // explanation ("Select a zone first", etc.) shows as a
+        // Bootstrap tooltip instead, only while locked.
         this.input.placeholder = this.placeholder;
         this.input.setAttribute('aria-autocomplete', 'list');
+
+        // Attached to .combobox-control (not the <input> itself) —
+        // disabled form elements don't fire the mouse/focus events
+        // Bootstrap's tooltip relies on, so the always-enabled
+        // wrapper div is the correct hover target, per Bootstrap's
+        // own documented pattern for tooltips on disabled controls.
+        this.control = rootEl.querySelector('.combobox-control');
+        this._bsTooltip = null;
+        if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+            this._bsTooltip = new bootstrap.Tooltip(this.control, {
+                title: this.lockedMessage,
+                trigger: 'hover focus',
+                placement: 'top',
+            });
+            this._bsTooltip.disable(); // silent until lock() below actually enables it
+        }
         this.panel.setAttribute('role', 'listbox');
 
         this.input.addEventListener('focus', () => this._open());
@@ -50,21 +71,37 @@ class Combobox {
         this.clear();
     }
 
-    /** Disables the field, clears its value, shows a locked placeholder. */
-    lock(lockedPlaceholderOverride) {
+    /** Disables the field, clears its value. Placeholder never changes — a Bootstrap tooltip explains why it's locked instead. */
+    lock(lockedMessageOverride) {
         this.locked = true;
         this.input.disabled = true;
-        this.input.placeholder = lockedPlaceholderOverride || this.lockedPlaceholder;
+
+        var message = lockedMessageOverride || this.lockedMessage;
+        if (this._bsTooltip) {
+            this._bsTooltip.setContent({ '.tooltip-inner': message });
+            this._bsTooltip.enable();
+        } else {
+            // Graceful fallback if Bootstrap's JS somehow isn't
+            // loaded — plain native tooltip instead of no message.
+            this.control.title = message;
+        }
+
         this._close();
         this.hiddenInput.value = '';
         this.input.value = '';
     }
 
-    /** Enables the field for interaction. */
+    /** Enables the field for interaction and hides/disables the locked-state tooltip. */
     unlock() {
         this.locked = false;
         this.input.disabled = false;
-        this.input.placeholder = this.placeholder;
+
+        if (this._bsTooltip) {
+            this._bsTooltip.hide();
+            this._bsTooltip.disable();
+        } else {
+            this.control.removeAttribute('title');
+        }
     }
 
     /** Clears the current selection without changing lock state. */

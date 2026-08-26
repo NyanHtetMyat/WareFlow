@@ -58,16 +58,16 @@ function createLocationCascade(opts) {
     var locationHidden = document.getElementById('id_location');
 
     var productCombo = new Combobox(document.getElementById('product_combobox'), productHidden, {
-        placeholder: 'Search SKU or product name…', lockedPlaceholder: 'No products available',
+        placeholder: 'Search SKU or product name…', lockedMessage: 'No products available',
     });
     var zoneCombo = new Combobox(document.getElementById('zone_combobox'), document.getElementById('zone_value'), {
-        placeholder: 'Search zone…', lockedPlaceholder: opts.productFirst ? 'Select a product first' : 'Select a zone',
+        placeholder: 'Zone…', lockedMessage: opts.productFirst ? 'Select a product first' : 'Select a zone',
     });
     var rackCombo = new Combobox(document.getElementById('rack_combobox'), document.getElementById('rack_value'), {
-        placeholder: 'Search rack…', lockedPlaceholder: 'Select a zone first',
+        placeholder: 'Rack…', lockedMessage: 'Select a zone first',
     });
     var binCombo = new Combobox(document.getElementById('bin_combobox'), document.getElementById('bin_value'), {
-        placeholder: 'Search bin…', lockedPlaceholder: 'Select a rack first',
+        placeholder: 'Bin…', lockedMessage: 'Select a rack first',
     });
 
     var stockInfo = opts.stockInfoId ? document.getElementById(opts.stockInfoId) : null;

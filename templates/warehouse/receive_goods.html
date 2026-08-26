@@ -30,7 +30,7 @@
 
         <div class="row">
             <div class="col-md-6">
-                {% include "components/combobox_field.html" with field_id="product" icon="bi-upc-scan" label="Product (SKU)" placeholder="Search SKU or product name…" %}
+                {% include "components/combobox_field.html" with field_id="product" icon="bi-upc-scan" label="Product (SKU)" placeholder="Search SKU or product name…" show_label=True show_search_icon=True %}
                 {% if form.product.errors %}
                     <div class="text-danger small mt-1">{{ form.product.errors }}</div>
                 {% endif %}
@@ -48,31 +48,33 @@
             </div>
         </div>
 
-        <div class="form-field">
-            <label class="form-field-label">
-                <i class="bi bi-geo-alt" aria-hidden="true"></i> Location
-            </label>
-            <div class="row">
-                <div class="col-md-4">
-                    {% include "components/combobox_field.html" with field_id="zone" icon="bi-flag" label="Zone" placeholder="Search zone…" %}
-                    <input type="hidden" id="zone_value">
-                </div>
-                <div class="col-md-4">
-                    {% include "components/combobox_field.html" with field_id="rack" icon="bi-grid-3x3-gap" label="Rack" placeholder="Search rack…" %}
-                    <input type="hidden" id="rack_value">
-                </div>
-                <div class="col-md-4">
-                    {% include "components/combobox_field.html" with field_id="bin" icon="bi-archive" label="Bin" placeholder="Search bin…" %}
-                    <input type="hidden" id="bin_value">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-field">
+                    <label class="form-field-label">
+                        <i class="bi bi-geo-alt" aria-hidden="true"></i> Location
+                    </label>
+                    <div class="location-cascade-group">
+                        <div class="location-cascade-col">
+                            {% include "components/combobox_field.html" with field_id="zone" show_label=False show_search_icon=False placeholder="Zone…" %}
+                            <input type="hidden" id="zone_value">
+                        </div>
+                        <div class="location-cascade-col">
+                            {% include "components/combobox_field.html" with field_id="rack" show_label=False show_search_icon=False placeholder="Rack…" %}
+                            <input type="hidden" id="rack_value">
+                        </div>
+                        <div class="location-cascade-col">
+                            {% include "components/combobox_field.html" with field_id="bin" show_label=False show_search_icon=False placeholder="Bin…" %}
+                            <input type="hidden" id="bin_value">
+                        </div>
+                    </div>
+                    {% if form.location.errors %}
+                        <div class="text-danger small mt-1">{{ form.location.errors }}</div>
+                    {% endif %}
+                    <div class="form-text" id="stock-info"></div>
                 </div>
             </div>
-            {% if form.location.errors %}
-                <div class="text-danger small mt-1">{{ form.location.errors }}</div>
-            {% endif %}
-            <div class="form-text" id="stock-info"></div>
-        </div>
 
-        <div class="row">
             <div class="col-md-6">
                 <div class="form-field form-field--quantity">
                     <label for="{{ form.quantity.id_for_label }}" class="form-field-label">

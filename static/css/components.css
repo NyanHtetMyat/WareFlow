@@ -1295,3 +1295,25 @@
     color: var(--color-text-muted);
     font-style: italic;
 }
+
+/* ═══════════════════ LOCATION CASCADE GROUP ═══════════════════ */
+/* Zone/Rack/Bin sit as equal thirds under ONE shared "Location"
+   label, instead of each rendering its own icon+label — makes
+   Location read as a single field, matching every other field on
+   these forms. */
+
+.location-cascade-group {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.location-cascade-col {
+    flex: 1;
+    min-width: 0; /* lets the combobox shrink below its content's natural width instead of overflowing */
+}
+
+@media (max-width: 480px) {
+    .location-cascade-group {
+        flex-direction: column;
+    }
+}
