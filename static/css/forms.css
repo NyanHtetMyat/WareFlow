@@ -307,44 +307,99 @@ input#direction-decrease:checked + .direction-option--decrease {
     margin-top: var(--space-xl);
 }
 
+.recent-requests-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+}
+
 .recent-requests-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
     font-size: 1rem;
     font-weight: 600;
     color: var(--color-text);
-    margin-bottom: var(--space-md);
+    margin: 0;
+}
+
+.recent-requests-title i {
+    font-size: 1.3rem;
+}
+
+.recent-requests-tabs {
+    display: flex;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
 }
 
 .recent-requests-list {
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
+    margin-bottom: var(--space-md);
 }
 
+/* Grid, not flex — every row shares the exact same fixed column
+   widths, so name/quantity/location/date/status line up vertically
+   regardless of how long any individual value is. This is the
+   actual fix; flex space-between can't guarantee this across
+   independent row containers. */
 .recent-request-item {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 64px 120px 110px 110px;
     align-items: center;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
+    gap: var(--space-md);
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     padding: var(--space-md);
 }
 
-.recent-request-main {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
+.recent-request-name {
     font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.recent-request-meta {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    font-size: 0.85rem;
+.recent-request-sku {
+    font-size: 0.88rem;
     color: var(--color-text-muted);
+    font-family: 'Courier New', monospace;
+}
+
+.recent-request-item .quantity-change-badge {
+    justify-self: start;
+}
+
+.recent-request-location {
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+}
+
+.recent-request-date {
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.recent-request-item .status-badge {
+    justify-self: end;
+}
+
+@media (max-width: 700px) {
+    .recent-request-item {
+        grid-template-columns: 1fr;
+        gap: var(--space-xs);
+    }
+    .recent-request-item .quantity-change-badge,
+    .recent-request-item .status-badge {
+        justify-self: start;
+    }
 }
 
 /* ═══════════════════ CHAINED LOCATION STOCK INFO ═══════════════════ */

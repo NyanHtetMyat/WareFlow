@@ -17,13 +17,13 @@
 
     <span class="status-badge status-badge--pending">
         <i class="bi bi-hourglass-split" aria-hidden="true"></i>
-        {{ pending_requests|length }} Pending
+        {{ pending_count }} Pending
     </span>
 </div>
 
-{% if pending_requests %}
+{% if page_obj.object_list %}
 <div class="review-grid">
-    {% for req in pending_requests %}
+    {% for req in page_obj.object_list %}
     <div class="review-card">
         <div class="review-card-header">
             <div>
@@ -65,6 +65,7 @@
     </div>
     {% endfor %}
 </div>
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring %}
 {% else %}
     {% include "components/empty_state.html" with icon="bi-inbox" title="No pending requests" subtitle="New adjustment requests from Staff will show up here." %}
 {% endif %}

@@ -125,10 +125,11 @@ def submit_adjustment_request(request):
     Staff-only page for requesting a stock correction. Increase
     mode behaves like Receive Goods (any Product, any registered
     Location); Decrease mode behaves like Dispatch (Product-first,
-    restricted to that Product's current stock locations). Both
-    Product option sets and both Location trees are sent to the
-    page at once so switching modes is instant client-side — see
-    static/js/location_cascade.js.
+    restricted to that Product's current stock locations).
+
+    "Your Recent Requests" below the form has two tabs — Pending
+    and History (approved/rejected) — each independently paginated
+    at 10 rows, matching every other table in the project.
     """
     if request.method == 'POST':
         form = StockAdjustmentRequestForm(request.POST)
@@ -148,11 +149,22 @@ def submit_adjustment_request(request):
     else:
         form = StockAdjustmentRequestForm()
 
-    recent_requests = (
-        StockAdjustmentRequest.objects
-        .filter(staff=request.user)
-        .select_related('product', 'location')[:5]
-    )
+    history_tab = request.GET.get('tab', 'pending')
+    if history_tab not in ('pending', 'history'):
+        history_tab = 'pending'
+
+    requests_qs = StockAdjustmentRequest.objects.filter(staff=request.user).select_related('product', 'location')
+    if history_tab == 'pending':
+        requests_qs = requests_qs.filter(status=StockAdjustmentRequest.Status.PENDING)
+    else:
+        requests_qs = requests_qs.exclude(status=StockAdjustmentRequest.Status.PENDING)
+
+    paginator = Paginator(requests_qs, 10)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    querystring = request.GET.copy()
+    querystring.pop('page', None)
+    querystring = querystring.urlencode()
 
     all_products = [{'id': p.id, 'sku': p.sku, 'name': p.name} for p in Product.objects.order_by('sku')]
     stocked_products = [{'id': p.id, 'sku': p.sku, 'name': p.name} for p in services.get_stocked_products()]
@@ -160,7 +172,9 @@ def submit_adjustment_request(request):
     return render(request, 'warehouse/adjustment_request.html', {
         'form': form,
         'page_title': 'Stock Adjustment Request',
-        'recent_requests': recent_requests,
+        'history_tab': history_tab,
+        'page_obj': page_obj,
+        'querystring': querystring,
         'increase_product_options': all_products,
         'decrease_product_options': stocked_products,
         'increase_location_tree': services.get_location_tree(),
@@ -172,16 +186,24 @@ def submit_adjustment_request(request):
 @login_required
 @manager_required
 def adjustment_requests(request):
-    """Manager-only review queue: every PENDING request, newest first."""
+    """Manager-only review queue: every PENDING request, newest first, paginated at 10."""
     pending_requests = (
         StockAdjustmentRequest.objects
         .filter(status=StockAdjustmentRequest.Status.PENDING)
         .select_related('product', 'location', 'staff')
     )
 
+    paginator = Paginator(pending_requests, 10)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    querystring = request.GET.copy()
+    querystring.pop('page', None)
+    querystring = querystring.urlencode()
+
     return render(request, 'warehouse/adjustment_requests.html', {
         'page_title': 'Adjustment Requests',
-        'pending_requests': pending_requests,
+        'page_obj': page_obj,
+        'querystring': querystring,
+        'pending_count': pending_requests.count(),
     })
 
 
@@ -373,14 +395,21 @@ def product_list(request):
             'threshold': p.low_stock_threshold,
             'status': STOCK_STATUS_RANK[p.stock_status],
         }.get(sort_field, p.name.lower())
-
+    
     products.sort(key=sort_key, reverse=(sort_dir == 'desc'))
+
+    paginator = Paginator(products, 10)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    querystring = request.GET.copy()
+    querystring.pop('page', None)
+    querystring = querystring.urlencode()
 
     return render(request, 'warehouse/products.html', {
         'page_title': 'Products',
         'breadcrumb_parent_label': 'Master Data',
         'breadcrumb_parent_url_name': 'warehouse:master_data',
-        'products': products,
+        'page_obj': page_obj,
+        'querystring': querystring,
         'categories': Category.objects.all(),
         'suppliers': Supplier.objects.all(),
         'search_query': search_query,
@@ -462,11 +491,18 @@ def supplier_list(request):
 
     suppliers.sort(key=sort_key, reverse=(sort_dir == 'desc'))
 
+    paginator = Paginator(suppliers, 10)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    querystring = request.GET.copy()
+    querystring.pop('page', None)
+    querystring = querystring.urlencode()
+
     return render(request, 'warehouse/suppliers.html', {
         'page_title': 'Suppliers',
         'breadcrumb_parent_label': 'Master Data',
         'breadcrumb_parent_url_name': 'warehouse:master_data',
-        'suppliers': suppliers,
+        'page_obj': page_obj,
+        'querystring': querystring,
         'search_query': search_query,
         'sort': sort_field,
         'dir': sort_dir,
@@ -537,14 +573,21 @@ def category_list(request):
             'name': c.name.lower(),
             'product_count': c.product_count,
         }.get(sort_field, c.name.lower())
-
+    
     categories.sort(key=sort_key, reverse=(sort_dir == 'desc'))
+
+    paginator = Paginator(categories, 10)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    querystring = request.GET.copy()
+    querystring.pop('page', None)
+    querystring = querystring.urlencode()
 
     return render(request, 'warehouse/categories.html', {
         'page_title': 'Categories',
         'breadcrumb_parent_label': 'Master Data',
-        'breadcrumb_parent_url_name': 'warehouse:master_data',
-        'categories': categories,
+        'breadcrumb_parent_url_name': 'warehouse:master_data',        
+        'page_obj': page_obj,
+        'querystring': querystring,
         'search_query': search_query,
         'sort': sort_field,
         'dir': sort_dir,
@@ -637,14 +680,21 @@ def location_list(request):
             'bin': loc.bin,
             'stocked_count': loc.stocked_count,
         }.get(sort_field, (loc.zone, loc.rack, loc.bin))
-
+    
     locations.sort(key=sort_key, reverse=(sort_dir == 'desc'))
+
+    paginator = Paginator(locations, 10)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    querystring = request.GET.copy()
+    querystring.pop('page', None)
+    querystring = querystring.urlencode()
 
     return render(request, 'warehouse/locations.html', {
         'page_title': 'Locations',
         'breadcrumb_parent_label': 'Master Data',
-        'breadcrumb_parent_url_name': 'warehouse:master_data',
-        'locations': locations,
+        'breadcrumb_parent_url_name': 'warehouse:master_data',        
+        'page_obj': page_obj,
+        'querystring': querystring,
         'search_query': search_query,
         'sort': sort_field,
         'dir': sort_dir,

@@ -45,7 +45,7 @@
     </form>
 </div>
 
-{% if suppliers %}
+{% if page_obj.object_list %}
 <div class="table-card">
     <div class="table-responsive">
         <table class="wf-table">
@@ -57,7 +57,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for supplier in suppliers %}
+                {% for supplier in page_obj.object_list %}
                 <tr class="detail-row-trigger" data-pk="{{ supplier.pk }}" data-detail='{{ supplier.detail_json }}' data-edit='{{ supplier.edit_json }}'>
                     <td class="wf-table-product-name">{{ supplier.name }}</td>
                     <td class="text-muted">{{ supplier.contact_info|truncatechars:60 }}</td>
@@ -68,6 +68,7 @@
         </table>
     </div>
 </div>
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring %}
 {% else %}
     {% include "components/empty_state.html" with icon="bi-truck" title="No suppliers found" subtitle="Try a different search, or add a new supplier." %}
 {% endif %}

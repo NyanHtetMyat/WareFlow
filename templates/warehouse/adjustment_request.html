@@ -113,28 +113,41 @@
     </form>
 </div>
 
-{% if recent_requests %}
 <div class="recent-requests">
-    <h2 class="recent-requests-title">Your Recent Requests</h2>
-    <div class="recent-requests-list">
-        {% for req in recent_requests %}
-        <div class="recent-request-item">
-            <div class="recent-request-main">
-                <span>{{ req.product.sku }} — {{ req.product.name }}</span>
+    <div class="recent-requests-header">
+        <h2 class="recent-requests-title"><i class="bi bi-clock-history" aria-hidden="true"></i> Your Recent Requests</h2>
+        <div class="recent-requests-tabs">
+            <a href="?tab=pending" class="report-tab {% if history_tab == 'pending' %}active{% endif %}">Pending</a>
+            <a href="?tab=history" class="report-tab {% if history_tab == 'history' %}active{% endif %}">History</a>
+        </div>
+    </div>
+
+    {% if page_obj.object_list %}
+        <div class="recent-requests-list">
+            {% for req in page_obj.object_list %}
+            <div class="recent-request-item">
+                <span>
+                    <div class="recent-request-name">
+                        {{ req.product.name }}
+                    </div>
+                    <div class="recent-request-sku">
+                        {{ req.product.sku }}
+                    </div>  
+                </span>
                 <span class="quantity-change-badge {% if req.quantity_change >= 0 %}quantity-change-badge--increase{% else %}quantity-change-badge--decrease{% endif %}">
                     {% if req.quantity_change > 0 %}+{% endif %}{{ req.quantity_change }}
                 </span>
-            </div>
-            <div class="recent-request-meta">
-                <span>{{ req.location }}</span>
-                <span>{{ req.created_at|date:"M d, Y" }}</span>
+                <span class="recent-request-location">{{ req.location }}</span>
+                <span class="recent-request-date">{{ req.created_at|date:"M d, Y" }}</span>
                 <span class="status-badge status-badge--{{ req.status|lower }}">{{ req.get_status_display }}</span>
             </div>
+            {% endfor %}
         </div>
-        {% endfor %}
-    </div>
+        {% include "components/pagination.html" with page_obj=page_obj querystring=querystring %}
+    {% else %}
+        {% include "components/empty_state.html" with icon="bi-clock-history" title="Nothing here" subtitle="Switch tabs, or submit a new request above." %}
+    {% endif %}
 </div>
-{% endif %}
 
 {{ increase_product_options|json_script:"increase-product-options-data" }}
 {{ decrease_product_options|json_script:"decrease-product-options-data" }}

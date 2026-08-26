@@ -48,7 +48,7 @@
     </form>
 </div>
 
-{% if locations %}
+{% if page_obj.object_list %}
 <div class="table-card">
     <div class="table-responsive">
         <table class="wf-table">
@@ -62,7 +62,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for location in locations %}
+                {% for location in page_obj.object_list %}
                 <tr class="detail-row-trigger" data-pk="{{ location.pk }}" data-detail='{{ location.detail_json }}' data-edit='{{ location.edit_json }}'>
                     <td><span class="location-chip">{{ location }}</span></td>
                     <td>{{ location.zone }}</td>
@@ -75,6 +75,7 @@
         </table>
     </div>
 </div>
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring %}
 {% else %}
     {% include "components/empty_state.html" with icon="bi-geo-alt" title="No locations found" subtitle="Try a different search, or add a new location." %}
 {% endif %}

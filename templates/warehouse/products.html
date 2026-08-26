@@ -68,7 +68,7 @@
     </form>
 </div>
 
-{% if products %}
+{% if page_obj.object_list %}
 <div class="table-card">
     <div class="table-responsive">
         <table class="wf-table">
@@ -83,7 +83,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for product in products %}
+                {% for product in page_obj.object_list %}
                 <tr class="detail-row-trigger" data-pk="{{ product.pk }}" data-detail='{{ product.detail_json }}' data-edit='{{ product.edit_json }}'>
                     <td class="wf-table-product-sku">{{ product.sku }}</td>
                     <td class="wf-table-product-name">{{ product.name }}</td>
@@ -105,6 +105,7 @@
         </table>
     </div>
 </div>
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring %}
 {% else %}
     {% include "components/empty_state.html" with icon="bi-tags" title="No products found" subtitle="Try adjusting your search or filters, or add a new product." %}
 {% endif %}

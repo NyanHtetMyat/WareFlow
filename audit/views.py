@@ -63,7 +63,7 @@ def audit_log_list(request):
         order_field = '-' + order_field
     logs_qs = logs_qs.order_by(order_field)
 
-    paginator = Paginator(logs_qs, 15)
+    paginator = Paginator(logs_qs, 10)
     page_obj = paginator.get_page(request.GET.get('page'))
 
     # product_sku is a deliberate text snapshot, not a live FK (see
