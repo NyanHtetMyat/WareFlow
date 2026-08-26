@@ -7,9 +7,10 @@ correct starting page after login.
 
 from django.contrib.auth import login as auth_login, logout
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .forms import WareFlowLoginForm
+from .models import Notification
 
 
 def login_view(request):
@@ -69,3 +70,20 @@ def dashboard_redirect(request):
     return render(request, 'accounts/placeholder_dashboard.html', {
         'role': request.user.get_role_display(),
     })
+
+
+@login_required
+def notification_open(request, pk):
+    """
+    Marks a notification as read and redirects to its target page.
+    Ownership-checked via user=request.user in the lookup — a user
+    can never mark or view another user's notification by guessing
+    a pk. Plain GET is intentional: opening a notification IS the
+    read action from the user's perspective (like opening an
+    email), not a destructive operation needing POST protection.
+    """
+    notification = get_object_or_404(Notification, pk=pk, user=request.user)
+    if not notification.is_read:
+        notification.is_read = True
+        notification.save(update_fields=['is_read'])
+    return redirect(notification.target_url)

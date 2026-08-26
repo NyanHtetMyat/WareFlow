@@ -12,6 +12,7 @@ settings.py BEFORE running the first migration.
 """
 
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 from django.db import models
 
 
@@ -85,3 +86,44 @@ class User(AbstractUser):
     def __str__(self):
         # Shown in Django admin and shell — makes debugging easier
         return f"{self.username} ({self.get_role_display()})"
+
+
+class Notification(models.Model):
+    """
+    Generic per-user notification. Deliberately has NO foreign key
+    to StockAdjustmentRequest, Product, or any other business model
+    — everything a notification needs to display and navigate is
+    captured as plain text/URL fields at creation time. This keeps
+    notifications fully independent of warehouse domain models, per
+    the confirmed architecture boundary: a business record can be
+    edited or reach a different state later without ever needing to
+    touch or invalidate a notification that already referenced it.
+    """
+
+    class NotificationType(models.TextChoices):
+        ADJUSTMENT_APPROVED = "ADJUSTMENT_APPROVED", "Adjustment Approved"
+        ADJUSTMENT_REJECTED = "ADJUSTMENT_REJECTED", "Adjustment Rejected"
+        ADJUSTMENT_SUBMITTED = "ADJUSTMENT_SUBMITTED", "Adjustment Submitted"
+
+    # CASCADE (not PROTECT, unlike AuditLog.user) — notifications
+    # are transient inbox items, not permanent historical records,
+    # so it's correct for them to simply disappear if the owning
+    # user account is ever deleted.
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications"
+    )
+
+    notification_type = models.CharField(max_length=25, choices=NotificationType.choices)
+    message = models.CharField(max_length=255)
+    target_url = models.CharField(
+        max_length=255,
+        help_text="Where clicking this notification navigates to. Always generated server-side via reverse(), never user input.",
+    )
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user.username} — {self.message}"

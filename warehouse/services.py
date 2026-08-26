@@ -14,7 +14,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone
-
+from accounts import services as notification_services
 from .models import AuditLog, Inventory, Location, Product, StockAdjustmentRequest
 
 
@@ -220,11 +220,13 @@ def submit_adjustment_request(product, location, staff_user, quantity_change, re
                 f"({inventory.quantity} units currently at this location)."
             )
 
-    return StockAdjustmentRequest.objects.create(
+    adjustment_request = StockAdjustmentRequest.objects.create(
         product=product, location=location, staff=staff_user,
         quantity_change=quantity_change, reason=reason,
         status=StockAdjustmentRequest.Status.PENDING,
     )
+    notification_services.notify_managers_new_adjustment_request(adjustment_request)
+    return adjustment_request
 
 
 @transaction.atomic
@@ -281,6 +283,7 @@ def approve_adjustment(adjustment_request, manager_user):
     adjustment_request.manager = manager_user
     adjustment_request.reviewed_at = timezone.now()
     adjustment_request.save()
+    notification_services.notify_staff_adjustment_reviewed(adjustment_request, approved=True)
     return adjustment_request
 
 
@@ -293,4 +296,5 @@ def reject_adjustment(adjustment_request, manager_user):
     adjustment_request.manager = manager_user
     adjustment_request.reviewed_at = timezone.now()
     adjustment_request.save()
+    notification_services.notify_staff_adjustment_reviewed(adjustment_request, approved=False)
     return adjustment_request

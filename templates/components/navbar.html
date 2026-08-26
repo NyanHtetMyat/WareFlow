@@ -67,7 +67,50 @@ ASSUMPTION / PROVISIONAL DESIGN DECISION:
     {% endif %}
 </nav>
 
-<div class="profile-chip">
+<div class="navbar-right">
+    <div class="dropdown notification-bell-wrap">
+        <button class="notification-bell" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
+            <i class="bi bi-bell" aria-hidden="true"></i>
+            {% if nav_unread_count > 0 %}
+                <span class="notification-bell-dot" aria-hidden="true"></span>
+            {% endif %}
+        </button>
+
+        <div class="dropdown-menu dropdown-menu-end notification-popover">
+            <div class="notification-popover-header">Notifications</div>
+
+            {% if nav_notifications %}
+                <div class="notification-popover-list">
+                    {% for notif in nav_notifications %}
+                    <a href="{% url 'accounts:notification_open' notif.pk %}"
+                       class="notification-item {% if not notif.is_read %}notification-item--unread{% endif %}">
+                        <span class="notification-item-icon notification-item-icon--{{ notif.notification_type|lower }}">
+                            {% if notif.notification_type == "ADJUSTMENT_APPROVED" %}
+                                <i class="bi bi-check-circle" aria-hidden="true"></i>
+                            {% elif notif.notification_type == "ADJUSTMENT_REJECTED" %}
+                                <i class="bi bi-x-circle" aria-hidden="true"></i>
+                            {% else %}
+                                <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
+                            {% endif %}
+                        </span>
+                        <span class="notification-item-body">
+                            <span class="notification-item-message">{{ notif.message }}</span>
+                            <span class="notification-item-time">{{ notif.created_at|date:"M d, g:i A" }}</span>
+                        </span>
+                        {% if not notif.is_read %}<span class="notification-item-dot" aria-hidden="true"></span>{% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="notification-popover-empty">
+                    <i class="bi bi-bell-slash" aria-hidden="true"></i>
+                    No notifications yet
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="profile-chip">
     {% comment %}
         Squircle letter-avatar, colored by role. Purely decorative —
         no profile picture uploads, not worth the complexity here.
@@ -86,4 +129,5 @@ ASSUMPTION / PROVISIONAL DESIGN DECISION:
             </span>
         </span>
     </span>
+    </div>
 </div>
