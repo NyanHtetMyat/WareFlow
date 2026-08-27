@@ -16,14 +16,42 @@
     </div>
 </div>
 
-<div class="stat-grid">
-    {% include "components/stat_card.html" with icon="bi-box-arrow-in-down" variant="success" label="Units Received Today" value=stats.received_today %}
-    {% include "components/stat_card.html" with icon="bi-box-arrow-up" variant="warning" label="Units Dispatched Today" value=stats.dispatched_today %}
-    {% include "components/stat_card.html" with icon="bi-hourglass-split" variant="adjustment" label="Pending Adjustment Requests" value=stats.pending_count %}
-    {% include "components/stat_card.html" with icon="bi-list-check" variant="primary" label="Total Transactions Today" value=stats.transaction_count %}
+<div class="kpi-grid">
+    <div class="kpi-card kpi-card--success">
+        <div class="kpi-card-icon"><i class="bi bi-box-arrow-in-down" aria-hidden="true"></i></div>
+        <div class="kpi-card-value">{{ stats.received_today }}</div>
+        <div class="kpi-card-label">Units Received Today</div>
+    </div>
+    <div class="kpi-card kpi-card--warning">
+        <div class="kpi-card-icon"><i class="bi bi-box-arrow-up" aria-hidden="true"></i></div>
+        <div class="kpi-card-value">{{ stats.dispatched_today }}</div>
+        <div class="kpi-card-label">Units Dispatched Today</div>
+    </div>
+    <div class="kpi-card kpi-card--adjustment">
+        <div class="kpi-card-icon"><i class="bi bi-hourglass-split" aria-hidden="true"></i></div>
+        <div class="kpi-card-value">{{ stats.pending_count }}</div>
+        <div class="kpi-card-label">Pending Adjustment Requests</div>
+    </div>
+    <div class="kpi-card kpi-card--primary">
+        <div class="kpi-card-icon"><i class="bi bi-list-check" aria-hidden="true"></i></div>
+        <div class="kpi-card-value">{{ stats.transaction_count }}</div>
+        <div class="kpi-card-label">Total Transactions Today</div>
+    </div>
 </div>
 
-<h2 class="dashboard-section-label">Today's Transactions</h2>
+<p class="quick-actions-label text-center"><i class="bi bi-lightning-charge"></i> Quick Actions</p>
+<div class="quick-actions-row">
+    <a href="{% url 'warehouse:receive_goods' %}" class="quick-action-btn">
+        <i class="bi bi-box-arrow-in-down" aria-hidden="true"></i> Receive Goods
+    </a>
+    <a href="{% url 'warehouse:dispatch_goods' %}" class="quick-action-btn">
+        <i class="bi bi-box-arrow-up" aria-hidden="true"></i> Dispatch Goods
+    </a>
+</div>
+
+<hr>
+
+<h2 class="dashboard-section-label"><i class="bi bi-clock-history" aria-hidden="true"></i>Today's Transactions</h2>
 
 {% if today_logs %}
 <div class="table-card">

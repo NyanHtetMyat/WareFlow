@@ -816,10 +816,18 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin: var(--space-lg) 0 var(--space-sm);
+
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
 }
 
 .dashboard-section-label--first {
     margin-top: 0;
+}
+
+.dashboard-section-label i {
+    font-size: 1.3rem;
 }
 
 /* ═══════════════════ DASHBOARD CHART CARD ═══════════════════ */
@@ -882,15 +890,15 @@
     font-weight: 800;
     color: var(--color-text);
     line-height: 1;
-    margin-top: var(--space-sm);
+    margin-bottom: var(--space-md);
 }
 
 .stock-gauge-total-label {
-    font-size: 0.8rem;
+    font-size: 1.2rem;
     color: var(--color-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    margin-bottom: var(--space-md);
+    margin-top: var(--space-sm);
 }
 
 .stock-gauge-legend {
@@ -926,96 +934,6 @@
 .legend-dot--ok { background-color: var(--color-success); }
 .legend-dot--low { background-color: var(--color-warning); }
 .legend-dot--out { background-color: var(--color-danger); }
-
-/* ── Today's Activity card: hero stat + compact rows ── */
-
-.dash-activity-card {
-    display: flex;
-    flex-direction: column;
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-    padding: var(--space-lg);
-}
-
-.dash-activity-hero {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    padding-bottom: var(--space-lg);
-    margin-bottom: var(--space-md);
-    border-bottom: 1px solid var(--color-border);
-}
-
-.dash-activity-hero-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 64px;
-    height: 64px;
-    border-radius: var(--radius-lg);
-    background-color: var(--color-primary);
-    color: var(--color-text-inverse);
-    font-size: 1.8rem;
-    flex-shrink: 0;
-}
-
-.dash-activity-hero-value {
-    font-size: 2.4rem;
-    font-weight: 800;
-    color: var(--color-text);
-    line-height: 1;
-}
-
-.dash-activity-hero-label {
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-    margin-top: 0.2rem;
-}
-
-.dash-activity-rows {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    flex-grow: 1;
-    justify-content: center;
-}
-
-.dash-activity-row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    padding: var(--space-sm) 0;
-}
-
-.dash-activity-row-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius-md);
-    font-size: 1rem;
-    color: var(--color-text-inverse);
-    flex-shrink: 0;
-}
-
-.dash-activity-row-icon--success { background-color: var(--color-success); }
-.dash-activity-row-icon--warning { background-color: var(--color-accent); }
-.dash-activity-row-icon--adjustment { background-color: var(--color-adjustment); }
-
-.dash-activity-row-label {
-    flex-grow: 1;
-    font-size: 0.9rem;
-    color: var(--color-text-muted);
-}
-
-.dash-activity-row-value {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--color-text);
-}
 
 /* ── Large chart card ── */
 
@@ -1282,6 +1200,10 @@
     transition: background-color 0.15s ease, color 0.15s ease;
 }
 
+.notification-bell i {
+    font-size: 1.5rem;
+}
+
 .notification-bell:hover,
 .notification-bell:focus-visible {
     background-color: var(--color-bg);
@@ -1407,4 +1329,203 @@
     font-size: 1.6rem;
     margin-bottom: var(--space-sm);
     color: var(--color-border);
+}
+
+/* Only rings when there's something to actually alert about —
+   controlled by a modifier class, not always-on, so a fully-read
+   inbox gets a calm, static bell. */
+.notification-bell--unread .bi-bell {
+    display: inline-block;
+    transform-origin: 50% 0%;
+    animation: bellRing 3s ease-in-out infinite;
+}
+
+@keyframes bellRing {
+    0%, 60%, 100% { transform: rotate(0deg); }
+    2%  { transform: rotate(14deg); }
+    4%  { transform: rotate(-12deg); }
+    6%  { transform: rotate(10deg); }
+    8%  { transform: rotate(-8deg); }
+    10% { transform: rotate(6deg); }
+    12% { transform: rotate(-4deg); }
+    14% { transform: rotate(2deg); }
+    16% { transform: rotate(0deg); }
+}
+
+/* Respect users who've asked their OS to minimize motion */
+@media (prefers-reduced-motion: reduce) {
+    .notification-bell--unread .bi-bell {
+        animation: none;
+    }
+}
+
+/* ═══════════════════ DASHBOARD KPI CARDS ═══════════════════ */
+/* Used ONLY on the Staff/Manager dashboards — deliberately NOT
+   .stat-card, which stays the standard everywhere else. Solid
+   gradient backgrounds (never white), a translucent icon badge
+   that visually shares the card's own color, entrance animation on
+   load, and a hover lift on every card regardless of whether it's
+   clickable. */
+
+@keyframes kpiCardIn {
+    from { opacity: 0; transform: translateY(18px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+.kpi-grid--3col {
+    margin-bottom: 0;
+    grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 700px) {
+    .kpi-grid--3col {
+        grid-template-columns: 1fr;
+    }
+}
+
+.kpi-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    color: var(--color-text-inverse);
+    box-shadow: var(--shadow-md);
+    animation: kpiCardIn 0.8s cubic-bezier(0.21, 0.98, 0.49, 1.05) both;
+    transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.22);
+}
+
+/* Staggered entrance — first 4 children of any .kpi-grid animate
+   in one after another rather than all at once. */
+.kpi-grid .kpi-card:nth-child(1) { animation-delay: 0s; }
+.kpi-grid .kpi-card:nth-child(2) { animation-delay: 0.08s; }
+.kpi-grid .kpi-card:nth-child(3) { animation-delay: 0.16s; }
+.kpi-grid .kpi-card:nth-child(4) { animation-delay: 0.24s; }
+
+.kpi-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-rounded);
+    background-color: rgba(255, 255, 255, 0.22);
+    font-size: 2rem;
+    margin-bottom: var(--space-md);
+    transition: transform 0.22s ease;
+}
+
+.kpi-card:hover .kpi-card-icon {
+    transform: scale(1.14) rotate(-6deg);
+}
+
+.kpi-card-value {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.kpi-card-label {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 0.3rem;
+}
+
+.kpi-card--success { background: linear-gradient(135deg, var(--color-success), color-mix(in srgb, var(--color-success), black 30%)); }
+.kpi-card--warning { background: linear-gradient(135deg, var(--color-accent), color-mix(in srgb, var(--color-accent), black 30%)); }
+.kpi-card--adjustment { background: linear-gradient(135deg, var(--color-adjustment), color-mix(in srgb, var(--color-adjustment), black 30%)); }
+.kpi-card--primary { background: linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary-hover), black 30%)); }
+
+/* Hero variant — the big "Total Transactions Today" card. Spans
+   the full width of whatever grid/flex context it sits in. */
+.kpi-card--hero {
+    padding: var(--space-xl) var(--space-lg);
+}
+
+.kpi-card--hero .kpi-card-value {
+    font-size: 3rem;
+}
+
+.kpi-card--hero .kpi-card-icon {
+    width: 56px;
+    height: 56px;
+    font-size: 1.6rem;
+}
+
+/* Oversized faint watermark icon — a common "premium dashboard"
+   flourish, kept subtle (12% opacity) so it never competes with
+   the actual number/label. */
+.kpi-card-watermark {
+    position: absolute;
+    right: 32px;
+    bottom: 16px;
+    font-size: 8rem;
+    color: #fff;
+    opacity: 0.12;
+    pointer-events: none;
+}
+
+/* ═══════════════════ MANAGER DASHBOARD: ACTIVITY STACK ═══════════════════ */
+
+.dash-activity-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+/* ═══════════════════ QUICK ACTION BUTTONS (Staff Dashboard) ═══════════════════ */
+
+.quick-actions-label {
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-sm);
+}
+
+.quick-actions-row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+}
+
+.quick-action-btn {
+    /* No flex-grow — sized to its own content, not the row */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: 0.65rem 1.5rem;
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-text-inverse);
+    text-decoration: none;
+    background: color-mix(in srgb, var(--color-primary), white 5%);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.quick-action-btn i {
+    font-size: 1.1rem;
+}
+
+.quick-action-btn:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+    background: var(--color-sidebar-end);
+    color: var(--color-text-inverse);
 }

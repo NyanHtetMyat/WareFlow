@@ -18,22 +18,7 @@ WHAT THIS FILE DOES:
 ASSUMPTION / PROVISIONAL DESIGN DECISION:
   "Warehouse" is hardcoded as the breadcrumb's root label rather
   than passed as a context variable, because every authenticated
-  page right now genuinely belongs to the warehouse app — there's
-  no second section yet to distinguish it from. Once reports/ or
-  audit/ get real pages of their own, turn this into a
-  `breadcrumb_section` context variable (same pattern as
-  `page_title` below) instead of leaving it hardcoded.
-
-  `page_title` (already passed by every view) now doubles as the
-  breadcrumb's current-page segment — no new context variable was
-  needed for that part.
-
-  Checked warehouse/urls.py before building this: every current
-  route is a direct child of "Warehouse" (Product/Supplier "Edit"
-  happens via a modal on their list page, not a separate route —
-  no genuine nested page exists yet). If a real nested page is
-  added later, extend this block for that one template rather than
-  building a generic auto-deriving breadcrumb system pre-emptively.
+  page right now genuinely belongs to the warehouse app
 
   The Dashboard page itself is treated as the breadcrumb ROOT, not
   a child of "Warehouse" — showing "Warehouse > Dashboard" would be
@@ -69,7 +54,7 @@ ASSUMPTION / PROVISIONAL DESIGN DECISION:
 
 <div class="navbar-right">
     <div class="dropdown notification-bell-wrap">
-        <button class="notification-bell" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
+        <button class="notification-bell {% if nav_unread_count > 0 %}notification-bell--unread{% endif %}" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
             <i class="bi bi-bell" aria-hidden="true"></i>
             {% if nav_unread_count > 0 %}
                 <span class="notification-bell-dot" aria-hidden="true"></span>

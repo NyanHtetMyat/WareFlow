@@ -809,6 +809,11 @@ def manager_dashboard(request):
     ).count()
     total_products = Product.objects.count()
 
+    # Org-wide count across ALL Staff, not just one user — distinct
+    # from Staff's own "Total Transactions Today" card, which is
+    # scoped to request.user only (see staff_dashboard above).
+    total_transactions_today = AuditLog.objects.filter(timestamp__date=today).count()
+
     return render(request, 'warehouse/manager_dashboard.html', {
         'page_title': 'Dashboard',
         'stock_counts': stock_counts,
@@ -817,5 +822,6 @@ def manager_dashboard(request):
             'received_today': received_today,
             'dispatched_today': dispatched_today,
             'pending_count': pending_count,
+            'total_transactions_today': total_transactions_today,
         },
     })
