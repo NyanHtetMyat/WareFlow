@@ -42,7 +42,7 @@ def logout_view(request):
     logout(request)
 
     # 2. Show Alert to user
-    messages.info(request, "You are Logged out")
+    messages.info(request, "You have Logged out")
     
     # 3. Redirect to your login page (or home page)
     return redirect('accounts:login')

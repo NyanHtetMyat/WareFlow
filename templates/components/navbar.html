@@ -83,7 +83,7 @@ ASSUMPTION / PROVISIONAL DESIGN DECISION:
                 <div class="notification-popover-list">
                     {% for notif in nav_notifications %}
                     <a href="{% url 'accounts:notification_open' notif.pk %}"
-                       class="notification-item {% if not notif.is_read %}notification-item--unread{% endif %}">
+                       class="notification-item {% if notif.is_read %}notification-item--read{% endif %}">
                         <span class="notification-item-icon notification-item-icon--{{ notif.notification_type|lower }}">
                             {% if notif.notification_type == "ADJUSTMENT_APPROVED" %}
                                 <i class="bi bi-check-circle" aria-hidden="true"></i>

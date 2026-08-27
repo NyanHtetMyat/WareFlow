@@ -163,70 +163,6 @@
     }
 }
 
-/* ═══════════════════ AUTH / LOGIN PAGE ═══════════════════ */
-/* Styles for templates/accounts/login.html. */
-
-.auth-logo {
-    /* Larger than the sidebar's .wareflow-icon on purpose — the login
-       page has no sidebar/navbar competing for attention, so the logo
-       is the visual anchor of the whole page and can afford more
-       presence, matching the hierarchy of the reference login page. */
-    width: 56px;
-    height: 56px;
-}
-
-.auth-input-group {
-    /* Named "auth-input-group" instead of Bootstrap's own
-       ".input-group" class specifically to avoid colliding with
-       Bootstrap 5's built-in input-group styling, which brings its
-       own border-radius/flex behavior that would fight this component. */
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-
-    padding: 0 0.5rem;
-    border: 2px solid var(--color-border);
-    border-radius: var(--radius-md);
-
-    transition: border-color 0.15s ease;
-}
-
-.auth-input-group:focus-within {
-    /* This is the key behavior: the OUTER capsule gets the focus
-       highlight, not the inner input, so icon + field highlight
-       together as one unit. */
-    border-color: var(--color-primary);
-}
-
-.auth-input-group .field-icon {
-    flex-shrink: 0;
-    color: var(--color-text-muted);
-    font-size: 2rem;
-}
-
-.auth-input-group:focus-within .field-icon {
-    color: var(--color-primary);
-}
-
-.auth-field {
-    flex: 1;
-    border: none;
-    background-color: transparent;
-    padding: 0.375rem 0;
-}
-
-.auth-field:focus {
-    /* Neutralizes Bootstrap's default focus ring on the inner input
-       itself, since focus is now indicated by .auth-input-group's
-       border-color change instead. Scoped to .auth-field only, so
-       normal form inputs elsewhere in WareFlow keep Bootstrap's
-       standard focus ring. */
-    background-color: transparent;
-    border: none;
-    outline: none;
-    box-shadow: none;
-}
-
 /* ═══════════════════ NAVBAR — BREADCRUMB ═══════════════════ */
 
 .breadcrumb-nav {
@@ -1407,7 +1343,7 @@
     color: var(--color-text);
 }
 
-.notification-item--unread {
+.notification-item--read {
     background-color: rgba(30, 42, 69, 0.04);
 }
 
@@ -1440,7 +1376,7 @@
     color: var(--color-text);
 }
 
-.notification-item--unread .notification-item-message {
+.notification-item--read .notification-item-message {
     font-weight: 600;
 }
 
@@ -1456,7 +1392,7 @@
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background-color: var(--color-primary);
+    background-color: var(--color-danger);
 }
 
 .notification-popover-empty {

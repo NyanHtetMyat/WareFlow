@@ -9,8 +9,16 @@
   flags were never set to False at all. Being explicit here is the
   actual fix, not a style preference.
 
-  Usage (Product — full field, own label+icon+search icon):
-    {% include "components/combobox_field.html" with field_id="product" icon="bi-upc-scan" label="Product (SKU)" placeholder="Search SKU or product name…" show_label=True show_search_icon=True %}
+  Pass `errors` (e.g. form.product.errors) only when this field owns
+  its own .form-field wrapper (show_label=True), so the error
+  message renders INSIDE that wrapper instead of as a stray sibling
+  div with mismatched margin. Bare comboboxes (show_label=False —
+  Zone/Rack/Bin) don't take `errors`; their parent page already
+  wraps them in its own .form-field and handles the single shared
+  Location error itself.
+
+  Usage (Product — full field, own label+icon+search icon+errors):
+    {% include "components/combobox_field.html" with field_id="product" icon="bi-upc-scan" label="Product (SKU)" placeholder="Search SKU or product name…" show_label=True show_search_icon=True errors=form.product.errors %}
 
   Usage (Zone/Rack/Bin — bare combobox only, no label, no icon):
     {% include "components/combobox_field.html" with field_id="zone" placeholder="Zone…" show_label=False show_search_icon=False %}
@@ -27,4 +35,5 @@
         </div>
         <div class="combobox-panel" hidden></div>
     </div>
-{% if show_label %}</div>{% endif %}
+{% if show_label %}{% if errors %}<div class="text-danger small mt-1">{{ errors }}</div>{% endif %}
+</div>{% endif %}

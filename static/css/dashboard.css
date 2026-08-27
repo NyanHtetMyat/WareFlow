@@ -35,7 +35,7 @@ body.dashboard-page {
 
 .sidebar {
     grid-area: sidebar;
-    background-color: var(--color-primary);
+    background: linear-gradient(160deg, var(--color-sidebar-start), var(--color-sidebar-end));
     color: var(--color-text-inverse);
     display: flex;
     flex-direction: column;

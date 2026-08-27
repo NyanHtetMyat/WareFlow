@@ -13,6 +13,10 @@
     --color-primary-hover: #2A3B5C;  /* Lighter navy for hover/active states */
     --color-accent: #E8871E;         /* Warehouse safety amber - alerts, highlights */
 
+    /* ── Sidebar Colors ──────────────────────────────────────────── */
+    --color-sidebar-start: #1E2A45;
+    --color-sidebar-end: #2A2757;
+
     /* ── Status Colors ─────────────────────────────────────────── */
     --color-success: #2F9E63;
     --color-warning: #EAB308;
