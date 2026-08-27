@@ -139,9 +139,14 @@
 
         <li class="nav-item">
             <a href="{% url 'warehouse:adjustment_requests' %}"
-               class="nav-link {% if request.resolver_match.url_name == 'adjustment_requests' %}active{% endif %}"
-               title="Adjustment Requests">
-                <i class="bi bi-arrow-left-right nav-icon" aria-hidden="true"></i>
+            class="nav-link {% if request.resolver_match.url_name == 'adjustment_requests' %}active{% endif %}"
+            title="Adjustment Requests">
+                <span class="nav-icon-wrap">
+                    <i class="bi bi-arrow-left-right nav-icon" aria-hidden="true"></i>
+                    {% if nav_pending_adjustments_count > 0 %}
+                        <span class="nav-badge">{{ nav_pending_adjustments_count }}</span>
+                    {% endif %}
+                </span>
                 <span class="nav-label">Adjustment Requests</span>
             </a>
         </li>
