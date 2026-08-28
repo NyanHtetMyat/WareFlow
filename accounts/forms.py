@@ -5,8 +5,8 @@ Handles user input validation for authentication-related forms.
 """
 
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm
-
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
+from .models import User
 
 class WareFlowLoginForm(AuthenticationForm):
     """
@@ -35,3 +35,36 @@ class WareFlowLoginForm(AuthenticationForm):
             'placeholder': 'Password',
         })
     )
+
+
+class ProfileForm(forms.ModelForm):
+    """
+    Own-profile edit form. ONLY first_name, last_name, and image are
+    listed here — this is the actual backend enforcement that
+    username/email/role can never be changed through this form,
+    regardless of what a tampered POST request contains, since
+    Django's ModelForm only ever writes fields present in Meta.fields.
+    """
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'image']
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First name'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last name'}),
+        }
+
+
+class ChangePasswordForm(PasswordChangeForm):
+    """
+    Thin wrapper around Django's built-in PasswordChangeForm, adding
+    only WareFlow's usual widget styling — the actual old-password
+    verification and new-password validation logic is entirely
+    Django's own, not reimplemented here.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['old_password'].widget.attrs.update({'class': 'form-control'})
+        self.fields['new_password1'].widget.attrs.update({'class': 'form-control'})
+        self.fields['new_password2'].widget.attrs.update({'class': 'form-control'})

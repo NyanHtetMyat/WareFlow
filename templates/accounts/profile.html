@@ -1,0 +1,24 @@
+{% extends "layouts/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}My Profile — WareFlow{% endblock %}
+
+{% block dashboard_content %}
+<div class="form-page-header">
+    <div class="form-page-heading">
+        <div class="form-page-icon form-page-icon--adjustment">
+            <i class="bi bi-person-circle" aria-hidden="true"></i>
+        </div>
+        <div>
+            <h1 class="form-page-title">My Profile</h1>
+            <p class="form-page-subtitle">View and update your account details</p>
+        </div>
+    </div>
+</div>
+
+{% include "components/profile_card.html" with profile_user=profile_user form=form %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/profile.js' %}"></script>
+{% endblock %}

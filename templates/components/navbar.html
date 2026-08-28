@@ -97,12 +97,19 @@ ASSUMPTION / PROVISIONAL DESIGN DECISION:
 
     <div class="profile-chip">
     {% comment %}
-        Squircle letter-avatar, colored by role. Purely decorative —
-        no profile picture uploads, not worth the complexity here.
+        Squircle avatar, colored by role — shows the user's uploaded
+        photo if one exists, otherwise falls back to their initial
+        on a role-colored background. Same fallback logic (and the
+        same role-color classes) as the big avatar on the My
+        Profile page, so the two are always visually consistent.
     {% endcomment %}
-    <span class="profile-avatar profile-avatar--{{ user.role|lower }}" aria-hidden="true">
-        {{ user.username|slice:":1"|upper }}
-    </span>
+    {% if user.image %}
+        <img src="{{ user.image.url }}" alt="{{ user.display_name }}" class="profile-avatar profile-avatar-img-sm">
+    {% else %}
+        <span class="profile-avatar profile-avatar--{{ user.role|lower }}" aria-hidden="true">
+            {{ user.avatar_initial }}
+        </span>
+    {% endif %}
 
     <span class="profile-text">
         <span class="profile-welcome">Welcome back</span>

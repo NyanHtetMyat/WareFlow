@@ -245,6 +245,14 @@
     flex-shrink: 0;
 }
 
+.profile-avatar-img-sm {
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    padding: 0;
+    background: none;
+}
+
 .profile-avatar--staff { background-color: var(--color-primary); }
 .profile-avatar--manager { background-color: var(--color-warning); }
 .profile-avatar--admin { background-color: var(--color-danger); }
@@ -873,7 +881,6 @@
     grid-template-columns: minmax(280px, 380px) 1fr;
     gap: var(--space-lg);
     align-items: stretch;
-    margin-bottom: var(--space-lg);
 }
 
 @media (max-width: 900px) {
@@ -1358,11 +1365,11 @@
 .notification-bell--unread .bi-bell {
     display: inline-block;
     transform-origin: 50% 0%;
-    animation: bellRing 3s ease-in-out infinite;
+    animation: bellRing 2.5s ease-in-out infinite; 
 }
 
 @keyframes bellRing {
-    0%, 60%, 100% { transform: rotate(0deg); }
+    0%, 48%, 100% { transform: rotate(0deg); }
     2%  { transform: rotate(14deg); }
     4%  { transform: rotate(-12deg); }
     6%  { transform: rotate(10deg); }
@@ -1549,4 +1556,177 @@
     box-shadow: var(--shadow-md);
     background: var(--color-sidebar-end);
     color: var(--color-text-inverse);
+}
+
+/* ═══════════════════ PROFILE CARD ═══════════════════ */
+
+.profile-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    max-width: 760px;
+    margin-inline: auto; /* was missing — this is what actually centers the card */
+}
+
+.profile-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-lg);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* Plain colored icon + text, deliberately no background pill —
+   distinguishes this from solid-fill action buttons like "Save
+   Changes" and reads as informational rather than clickable. */
+.profile-role-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.profile-role-label--staff { color: var(--color-primary); }
+.profile-role-label--manager { color: #92700B; } /* matches the existing Low-Stock/warning badge text tone, not the raw --color-warning fill */
+.profile-role-label--admin { color: var(--color-danger); }
+
+.profile-card-body {
+    padding: var(--space-xl) var(--space-lg);
+}
+
+.profile-card-body-inner {
+    display: flex;
+    gap: var(--space-xl);
+}
+
+.profile-card-avatar-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    flex-shrink: 0;
+    width: 160px;
+}
+
+.profile-avatar-wrap {
+    position: relative;
+    width: 140px;
+    height: 140px;
+}
+
+.profile-avatar-img {
+    width: 140px;
+    height: 140px;
+    border-radius: var(--radius-lg);
+    object-fit: cover;
+    border: 1px solid var(--color-border);
+}
+
+/* No longer a neutral grey box — always paired with one of the
+   .profile-avatar--staff/manager/admin color classes below, same
+   as the small navbar avatar, so both are visually identical. */
+.profile-avatar-initial-lg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 140px;
+    height: 140px;
+    border-radius: var(--radius-lg);
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--color-text-inverse);
+}
+
+.avatar-remove-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background-color: var(--color-danger);
+    color: var(--color-text-inverse);
+    border: 2px solid var(--color-surface);
+    font-size: 0.7rem;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.15s ease;
+}
+
+.avatar-remove-btn:hover {
+    transform: scale(1.1);
+}
+
+/* Fixed max width regardless of filename length — this is what
+   actually fixes the "button becomes huge" bug. The label span
+   (not the button itself) gets the ellipsis treatment, so the
+   camera icon never gets squeezed or clipped, only the text does. */
+.profile-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    max-width: 128px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+#upload-btn-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0; /* required for text-overflow to actually work inside a flex child */
+}
+
+/* profile-role-badge (the old under-avatar pill) has been removed
+   entirely — replaced by .profile-role-label in the card header
+   above. */
+
+.profile-card-fields-col {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+/* Right-aligned with a top border, matching the .form-actions
+   pattern already used on every other form in the project (Receive
+   Goods, Dispatch Goods, etc.) — this was the source of the
+   "feels disconnected" complaint: every other form's action row
+   already looks like this, and this card's didn't. */
+.profile-card-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-lg);
+    margin-top: var(--space-xl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--color-border);
+}
+
+.profile-change-password-link {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    text-decoration: underline;
+}
+
+.profile-change-password-link:hover {
+    color: var(--color-primary);
+}
+
+@media (max-width: 600px) {
+    .profile-card-body-inner {
+        flex-direction: column;
+        align-items: center;
+    }
+    .profile-card-fields-col {
+        width: 100%;
+    }
 }

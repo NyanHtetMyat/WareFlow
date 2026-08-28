@@ -13,7 +13,24 @@ settings.py BEFORE running the first migration.
 
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
+import os
+import uuid
 from django.db import models
+
+
+def user_profile_photo_path(instance, filename):
+    """
+    Backend-controlled storage filename for profile photos. The
+    client's original filename is discarded entirely (only its
+    extension is kept) and replaced with a UUID4 — this avoids
+    collisions between users uploading files with the same original
+    name (e.g. every phone's default "IMG_1234.jpg"), sidesteps the
+    race condition a deterministic "user_{id}" name would create
+    the moment one user replaces their photo twice quickly, and
+    never leaks a sequential user ID into a public /media/ URL.
+    """
+    ext = os.path.splitext(filename)[1].lower()
+    return f"profile_photos/{uuid.uuid4().hex}{ext}"
 
 
 class User(AbstractUser):
@@ -64,6 +81,16 @@ class User(AbstractUser):
         help_text="Used for account identification. Must be unique.",
     )
 
+    # Optional profile photo. Falls back to initials (see
+    # avatar_initial below) when not set — nothing else in the app
+    # should assume this is always populated.
+    image = models.ImageField(
+        upload_to=user_profile_photo_path,
+        blank=True,
+        null=True,
+        help_text="Optional profile photo. Falls back to initials if not set.",
+    )
+
     # ── Convenience properties for role checks ───────────────────────────────
     # These make views/templates more readable than comparing raw strings,
     # e.g. "if request.user.is_manager:" instead of "if request.user.role == 'MANAGER':"
@@ -83,8 +110,32 @@ class User(AbstractUser):
         """True if this user has the ADMIN application role."""
         return self.role == self.Role.ADMIN
 
+    @property
+    def display_name(self):
+        """
+        Resolves to the best available human-readable name, per the
+        confirmed fallback order: First+Last -> First only -> Last
+        only -> username.
+        """
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        if self.first_name:
+            return self.first_name
+        if self.last_name:
+            return self.last_name
+        return self.username
+
+    @property
+    def avatar_initial(self):
+        """Single-letter avatar fallback, matching display_name's own source field at each fallback tier."""
+        if self.first_name:
+            return self.first_name[0].upper()
+        if self.last_name:
+            return self.last_name[0].upper()
+        return self.username[0].upper()
+
     def __str__(self):
-        # Shown in Django admin and shell — makes debugging easier
+        # Shown in Django admin and shell — makes debugging readable.
         return f"{self.username} ({self.get_role_display()})"
 
 

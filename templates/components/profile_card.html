@@ -1,0 +1,105 @@
+{% comment %}
+  Reusable Profile Details card. Usage:
+  {% include "components/profile_card.html" with profile_user=profile_user form=form %}
+
+  IMPORTANT: this is now ONE single <form> covering name fields AND
+  the photo — a previous version split them into two separate forms,
+  which meant the "Save Changes" button never actually submitted a
+  newly-selected photo at all. There is exactly one submit action
+  for the whole card.
+
+  The remove-photo (x) button and the live image preview are both
+  purely client-side (static/js/profile.js) until Save Changes is
+  actually clicked — nothing is persisted by either action alone.
+  Removal reuses Django's own ClearableFileInput mechanism: a hidden
+  "image-clear" checkbox that Django recognizes automatically on
+  submit, so no custom backend clearing logic was needed.
+{% endcomment %}
+<div class="profile-card">
+    <div class="profile-card-header">
+        <span>Profile Details</span>
+        <span class="profile-role-label profile-role-label--{{ profile_user.role|lower }}">
+            <i class="bi bi-person-badge-fill" aria-hidden="true"></i> {{ profile_user.get_role_display }}
+        </span>
+    </div>
+
+    <div class="profile-card-body">
+        <form method="post" enctype="multipart/form-data" id="profile-form">
+            {% csrf_token %}
+
+            <div class="profile-card-body-inner">
+                <div class="profile-card-avatar-col">
+                    <div class="profile-avatar-wrap" id="avatar-preview-wrap">
+                        <img src="{% if profile_user.image %}{{ profile_user.image.url }}{% endif %}"
+                             alt="{{ profile_user.display_name }}"
+                             id="avatar-preview-img"
+                             class="profile-avatar-img"
+                             {% if not profile_user.image %}style="display:none;"{% endif %}>
+
+                        <div class="profile-avatar-initial-lg profile-avatar--{{ profile_user.role|lower }}"
+                             id="avatar-preview-initial"
+                             {% if profile_user.image %}style="display:none;"{% endif %}>
+                            {{ profile_user.avatar_initial }}
+                        </div>
+
+                        <button type="button" class="avatar-remove-btn" id="avatar-remove-btn"
+                                aria-label="Remove photo"
+                                {% if not profile_user.image %}style="display:none;"{% endif %}>
+                            <i class="bi bi-x-lg" aria-hidden="true"></i>
+                        </button>
+                    </div>
+
+                    {% comment %} 
+                        Manually authored to match Django's ClearableFileInput's
+                        expected field names exactly ("image" / "image-clear"),
+                        so form validation recognizes both on submit without
+                        needing a custom widget or extra form.py logic. 
+                    {% endcomment %}
+                    <input type="file" name="image" id="id_image" accept="image/*" hidden>
+                    <input type="checkbox" name="image-clear" id="id_image-clear" hidden>
+
+                    <label for="id_image" class="btn btn-outline-secondary profile-upload-btn" title="">
+                        <i class="bi bi-camera" aria-hidden="true"></i> <span id="upload-btn-label">Edit Photo</span>
+                    </label>
+                </div>
+
+                <div class="profile-card-fields-col">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-field">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-field-label">First Name</label>
+                                {{ form.first_name }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-field">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-field-label">Last Name</label>
+                                {{ form.last_name }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-field">
+                                <label class="form-field-label">Username</label>
+                                <input type="text" class="form-control form-field-readonly" value="{{ profile_user.username }}" disabled readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-field">
+                                <label class="form-field-label">Email</label>
+                                <input type="text" class="form-control form-field-readonly" value="{{ profile_user.email }}" disabled readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-card-actions">
+                        <button type="submit" class="btn btn-adjustment">Save Changes</button>
+                        <a href="{% url 'accounts:change_password' %}" class="profile-change-password-link">Change Password</a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
