@@ -114,7 +114,9 @@ ASSUMPTION / PROVISIONAL DESIGN DECISION:
     <span class="profile-text">
         <span class="profile-welcome">Welcome back</span>
         <span class="profile-name-row">
-            {{ user.username }}
+            <span class="profile-name-truncate" data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ user.display_name }}">
+                {{ user.display_name }}
+            </span>
             <span class="role-tag">
                 <span class="role-dot role-dot--{{ user.role|lower }}" aria-hidden="true"></span>
                 {{ user.get_role_display }}

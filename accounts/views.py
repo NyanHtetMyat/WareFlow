@@ -133,4 +133,6 @@ def change_password_view(request):
     return render(request, 'accounts/change_password.html', {
         'page_title': 'Change Password',
         'form': form,
+        'breadcrumb_parent_label': 'My Profile',
+        'breadcrumb_parent_url_name': 'accounts:profile',
     })

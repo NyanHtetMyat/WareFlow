@@ -104,8 +104,15 @@
     text-align: center;
 }
 
-.nav-logout {
+/* Pins this second nav-items list to the bottom of the sidebar's
+   flex column, separate from the (flex-grow: 1) operations list
+   above it — this is what keeps My Profile and Logout visually
+   grouped together with no gap between them, instead of My Profile
+   trailing the operations list with empty space before Logout. */
+.nav-items--bottom {
+    flex-grow: 0;
     margin-top: auto;
+    padding-top: var(--space-sm);
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -275,6 +282,19 @@
     font-weight: 600;
     color: var(--color-text);
     font-size: 0.9rem;
+    min-width: 0; /* lets the truncated child below actually shrink instead of overflowing */
+}
+
+.profile-name-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    max-width: 80px;
+}
+
+.role-tag {
+    flex-shrink: 0; /* role tag never gets squeezed by a long name — only the name truncates */
 }
 
 /* The role tag: a colored dot + plain text, deliberately NOT a

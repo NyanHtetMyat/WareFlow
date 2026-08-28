@@ -1,30 +1,16 @@
 {% comment %}
   ────────────────────────────────────────────────────────────────
-  SIDEBAR NAVIGATION — PLACEHOLDER LINK MAP
+  SIDEBAR NAVIGATION
   ────────────────────────────────────────────────────────────────
-  Most links below use href="#" because their target apps
-  (warehouse, reports, audit) don't have urls.py entries yet.
-  Each placeholder has an inline comment stating its intended
-  target. Once an app's urls.py defines the named route, replace
-  that item's href="#" with the matching {% url %} tag shown in
-  its comment.
-
-  Working links right now (do not change):
-    - Dashboard -> accounts:dashboard_redirect
-    - Logout    -> accounts:logout
-
-  Placeholder links and their intended future routes:
-    - Receive Goods       -> warehouse:receive_goods
-    - Dispatch Goods      -> warehouse:dispatch_goods
-    - Inventory            -> warehouse:inventory_list
-    - Adjustment Requests (staff view)   -> warehouse:my_adjustment_requests
-    - Adjustment Requests (manager view) -> warehouse:adjustment_requests
-    - Low Stock            -> reports:low_stock
-    - Reports              -> reports:summary_report
-    - Products             -> warehouse:products
-    - Suppliers            -> warehouse:suppliers
-    - Audit Logs           -> audit:audit_logs
-    - Users (Admin)        -> accounts:user_management
+  Two separate <ul class="nav-items"> lists, not one:
+    - The first (flex-grow: 1) holds warehouse OPERATIONS, specific
+      to each role.
+    - The second (.nav-items--bottom, pinned to the bottom via
+      margin-top: auto) holds ACCOUNT-related items shared by every
+      role — My Profile and Logout — grouped together with a
+      separator line, deliberately adjacent to each other rather
+      than My Profile sitting at the bottom of the operations list
+      with an empty gap before Logout.
   ────────────────────────────────────────────────────────────────
 {% endcomment %}
 
@@ -48,7 +34,7 @@
         <path d="M 90 250 C 130 350, 270 350, 310 240" fill="none" stroke="url(#flowGrad)" stroke-width="24" stroke-linecap="round"/>
         <polyline points="280,255 310,240 325,275" fill="none" stroke="#EC4899" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
-    
+
     <span class="sidebar-title">WareFlow</span>
 </div>
 
@@ -174,11 +160,10 @@
 
     {% endif %}
 
-    {% comment %} 
-        Shared across every role — sits right above Logout, deliberately
-        OUTSIDE the per-role {% if %} blocks above so it only needs to
-        exist once instead of being duplicated into all three branches.
-    {% endcomment %}
+</ul>
+
+{# ── Account section: shared by every role, pinned to the bottom, grouped together ── #}
+<ul class="nav-items nav-items--bottom">
     <li class="nav-item">
         <a href="{% url 'accounts:profile' %}"
            class="nav-link {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'change_password' %}active{% endif %}"
@@ -187,12 +172,10 @@
             <span class="nav-label">My Profile</span>
         </a>
     </li>
-
+    <li class="nav-item">
+        <a href="{% url 'accounts:logout' %}" class="nav-link" title="Logout">
+            <i class="bi bi-box-arrow-left nav-icon" aria-hidden="true"></i>
+            <span class="nav-label">Logout</span>
+        </a>
+    </li>
 </ul>
-
-<div class="nav-item nav-logout">
-    <a href="{% url 'accounts:logout' %}" class="nav-link" title="Logout">
-        <i class="bi bi-box-arrow-left nav-icon" aria-hidden="true"></i>
-        <span class="nav-label">Logout</span>
-    </a>
-</div>
