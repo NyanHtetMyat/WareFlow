@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
             current.username = row.getAttribute('data-username');
             current.isActive = row.getAttribute('data-is-active') === 'true';
             var isSelf = row.getAttribute('data-is-self') === 'true';
+            var isTargetAdmin = row.getAttribute('data-role') === 'ADMIN';
 
             if (current.isActive) {
                 toggleLabel.textContent = 'Deactivate Account';
@@ -41,14 +42,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 toggleBtn.className = 'btn btn-sm btn-approve';
             }
 
-            // On the Admin's own account: hide Edit and
-            // Deactivate/Reactivate entirely (not just disable) —
-            // the matching hard block already exists server-side in
-            // accounts.views.user_edit / user_toggle_active, so this
-            // is UX only, never the actual security boundary. Reset
-            // Password intentionally stays available either way.
-            toggleBtn.style.display = isSelf ? 'none' : '';
-            if (editBtn) editBtn.style.display = isSelf ? 'none' : '';
+            // On the Admin's own account, or ANY other Admin
+            // account: hide Deactivate/Reactivate entirely (not just
+            // disable) — the matching hard block exists server-side
+            // in accounts.views.user_toggle_active, so this is UX
+            // only, never the actual security boundary. Edit stays
+            // visible for other Admins (their profile fields, just
+            // not Role, remain editable — see setRoleFieldForEdit),
+            // but is still hidden for self, same as before. Reset
+            // Password intentionally stays available in every case.
+            toggleBtn.style.display = (isSelf || isTargetAdmin) ? 'none' : '';
+            if (editBtn) editBtn.style.display = (isSelf || isTargetAdmin) ? 'none' : '';
         });
     });
 

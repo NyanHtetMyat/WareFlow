@@ -14,6 +14,9 @@
             <p class="form-page-subtitle">View and manage every WareFlow account</p>
         </div>
     </div>
+    <button type="button" class="btn btn-adjustment" id="addRecordButton" data-add-title="Create User">
+        <i class="bi bi-person-plus" aria-hidden="true"></i> Create User
+    </button>
 </div>
 
 <div class="list-toolbar">
@@ -76,6 +79,7 @@
                 <tr class="detail-row-trigger"
                     data-pk="{{ u.pk }}"
                     data-username="{{ u.username }}"
+                    data-role="{{ u.role }}"
                     data-is-active="{% if u.is_active %}true{% else %}false{% endif %}"
                     data-is-self="{% if u.is_self %}true{% else %}false{% endif %}"
                     data-header='{{ u.header_json }}'
@@ -166,7 +170,9 @@
 <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <form method="post" id="editModalForm" data-edit-url-template="{% url 'accounts:user_edit' 0 %}">
+            <form method="post" id="editModalForm"
+                  data-create-url="{% url 'accounts:user_create' %}"
+                  data-edit-url-template="{% url 'accounts:user_edit' 0 %}">
                 {% csrf_token %}
                 <div class="modal-header">
                     <h5 class="modal-title" id="editModalTitle">Edit User</h5>
@@ -174,9 +180,9 @@
                 </div>
                 <div class="modal-body">
                     <div class="form-field">
-                        <label class="form-field-label"><i class="bi bi-person" aria-hidden="true"></i> Username</label>
-                        <input type="text" class="form-control form-field-readonly" value="" id="modal_username_display" disabled readonly>
-                        <div class="form-text">Username cannot be changed.</div>
+                        <label for="modal_username" class="form-field-label"><i class="bi bi-person" aria-hidden="true"></i> Username</label>
+                        <input type="text" name="username" class="form-control form-field-readonly" value="" id="modal_username" disabled readonly>
+                        <div class="form-text" id="modal_username_help">Username cannot be changed.</div>
                     </div>
                     <div class="form-field">
                         <label for="modal_email" class="form-field-label"><i class="bi bi-envelope" aria-hidden="true"></i> Email</label>
@@ -203,6 +209,7 @@
                                 <option value="{{ value }}">{{ label }}</option>
                             {% endfor %}
                         </select>
+                        <div class="form-text" id="modal_role_help"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -257,9 +264,64 @@
     //      data-detail, so Photo/Full Name/Role only ever render
     //      once (in this header), never a second time in the
     //      generic row list below it.
+    // Username field + Role dropdown both change shape depending on
+    // whether the shared modal was opened for Edit (existing user,
+    // clicked via a table row) or Create (the "Create User" button,
+    // handled generically by management_modals.js's addRecordButton
+    // support). Row click = Edit mode: lock the field back down in
+    // case a previous Create click on this same page left it open.
+    function setUsernameFieldForEdit(username) {
+        var usernameField = document.getElementById('modal_username');
+        usernameField.value = username;
+        usernameField.disabled = true;
+        usernameField.readOnly = true;
+        usernameField.required = false;
+        usernameField.classList.add('form-field-readonly');
+        document.getElementById('modal_username_help').textContent = 'Username cannot be changed.';
+    }
+
+    // Admin account creation is scoped to Staff and Manager only
+    // (Wareflow Project Structure v.2, Section 10). Existing Admin
+    // accounts additionally can never be promoted/demoted at all
+    // (separate rule, requested later) — both rules share the same
+    // "disable the option, don't remove/hide it" technique so the
+    // <select> itself stays enabled and still submits a value; only
+    // 'hidden' options risk being reachable via keyboard in some
+    // browsers, 'disabled' options never are.
+    function setRoleOptionsForCreate() {
+        var roleSelect = document.getElementById('modal_role');
+        Array.prototype.forEach.call(roleSelect.options, function (opt) {
+            if (opt.value === 'ADMIN') opt.remove();
+        });
+        roleSelect.disabled = false;
+        roleSelect.classList.remove('form-field-readonly');
+        roleSelect.value = 'STAFF';
+        document.getElementById('modal_role_help').textContent = '';
+    }
+
+    // Edit mode: an existing ADMIN's role is completely locked (the
+    // only non-disabled option is ADMIN itself, so nothing else can
+    // ever be selected). A STAFF/MANAGER target can still be moved
+    // between those two, but never up to ADMIN — matching the same
+    // restriction enforced server-side in AdminUserEditForm.clean_role.
+    function setRoleFieldForEdit(targetRole) {
+        var roleSelect = document.getElementById('modal_role');
+        var isTargetAdmin = (targetRole === 'ADMIN');
+
+        Array.prototype.forEach.call(roleSelect.options, function (opt) {
+            opt.disabled = isTargetAdmin ? (opt.value !== 'ADMIN') : (opt.value === 'ADMIN');
+        });
+        roleSelect.value = targetRole;
+        roleSelect.classList.toggle('form-field-readonly', isTargetAdmin);
+        document.getElementById('modal_role_help').textContent = isTargetAdmin
+            ? 'Admin accounts cannot be promoted or demoted.'
+            : '';
+    }
+
     document.querySelectorAll('.detail-row-trigger').forEach(function (row) {
         row.addEventListener('click', function () {
-            document.getElementById('modal_username_display').value = row.getAttribute('data-username');
+            setUsernameFieldForEdit(row.getAttribute('data-username'));
+            setRoleFieldForEdit(row.getAttribute('data-role'));
 
             var header = JSON.parse(row.getAttribute('data-header'));
             var avatarImg = document.getElementById('userDetailAvatarImg');
@@ -285,5 +347,20 @@
             roleBadge.innerHTML = '<i class="bi ' + header.role_badge.icon + '" aria-hidden="true"></i> ' + header.role_badge.text;
         });
     });
+
+    var addUserButton = document.getElementById('addRecordButton');
+    if (addUserButton) {
+        addUserButton.addEventListener('click', function () {
+            var usernameField = document.getElementById('modal_username');
+            usernameField.value = '';
+            usernameField.disabled = false;
+            usernameField.readOnly = false;
+            usernameField.required = true;
+            usernameField.classList.remove('form-field-readonly');
+            document.getElementById('modal_username_help').textContent = 'Choose a unique username. The account is created with the default system password.';
+
+            setRoleOptionsForCreate();
+        });
+    }
 </script>
 {% endblock %}

@@ -88,3 +88,62 @@ class AdminUserEditForm(forms.ModelForm):
             'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last name'}),
             'role': forms.Select(attrs={'class': 'form-select'}),
         }
+
+    def clean_role(self):
+        """
+        Role changes through this form are restricted to STAFF <->
+        MANAGER only. An existing ADMIN can never be demoted, and a
+        STAFF/MANAGER can never be promoted to ADMIN — checked here
+        against self.instance.role (the value BEFORE this edit),
+        so this holds even if a manually crafted POST request omits
+        or tampers with the Role field's disabled <option> elements
+        in the UI, which are cosmetic only.
+        """
+        new_role = self.cleaned_data['role']
+        original_role = self.instance.role
+
+        if original_role == User.Role.ADMIN and new_role != User.Role.ADMIN:
+            raise forms.ValidationError("Admin accounts cannot be demoted.")
+        if original_role != User.Role.ADMIN and new_role == User.Role.ADMIN:
+            raise forms.ValidationError("Users cannot be promoted to Admin.")
+
+        return new_role
+
+
+class AdminUserCreateForm(forms.ModelForm):
+    """
+    Admin-facing form for creating a brand new Staff or Manager
+    account. Deliberately reuses the exact same Meta.fields shape as
+    AdminUserEditForm (email/first_name/last_name/role) plus
+    'username', which IS required here since it's how the new
+    account is identified.
+
+    No password field exists on this form on purpose — every new
+    account is created with settings.DEFAULT_RESET_PASSWORD (see
+    accounts.views.user_create), the same fixed system default
+    already used by the existing "Reset Password" action. The user
+    is expected to set their own password afterward via My Profile.
+
+    Per WareFlow Project Structure v.2, Section 10, Admin account
+    creation through this form is scoped to Staff and Manager only
+    — Role choices are narrowed in __init__ rather than in Meta so
+    AdminUserEditForm's full three-role dropdown is unaffected.
+    """
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name', 'role']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First name'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last name'}),
+            'role': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['role'].choices = [
+            (User.Role.STAFF, User.Role.STAFF.label),
+            (User.Role.MANAGER, User.Role.MANAGER.label),
+        ]

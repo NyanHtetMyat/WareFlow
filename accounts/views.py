@@ -16,7 +16,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 
 from .decorators import admin_required
-from .forms import WareFlowLoginForm, ProfileForm, ChangePasswordForm, AdminUserEditForm
+from .forms import WareFlowLoginForm, ProfileForm, ChangePasswordForm, AdminUserEditForm, AdminUserCreateForm
 from .models import Notification, User
 
 # Role badge styling + sort rank, shared by the table and the
@@ -282,11 +282,45 @@ def user_edit(request, pk):
         messages.error(request, "You can't edit your own account here. Use My Profile instead.")
         return redirect('accounts:user_management')
 
+    if target_user.role == User.Role.ADMIN:
+        # Editing is fully unavailable for OTHER Admin accounts too,
+        # not just self — Reset Password remains the only permitted
+        # action against another Admin (see user_reset_password,
+        # unchanged). Checked before the POST branch so a request
+        # crafted directly against this URL is blocked the same way.
+        messages.error(request, "Admin accounts cannot be edited. Only a password reset is available.")
+        return redirect('accounts:user_management')
+
     if request.method == 'POST':
         form = AdminUserEditForm(request.POST, instance=target_user)
         if form.is_valid():
             form.save()
             messages.success(request, f"{target_user.username}'s account was updated.")
+        else:
+            messages.error(request, next(iter(form.errors.values()))[0])
+    return redirect('accounts:user_management')
+
+
+@login_required
+@admin_required
+def user_create(request):
+    """
+    Admin creates a brand new Staff or Manager account (role choices
+    are narrowed to those two inside AdminUserCreateForm — see
+    forms.py). No password is collected from the Admin: every new
+    account is created with the fixed system default password
+    (settings.DEFAULT_RESET_PASSWORD), the same mechanism the
+    existing "Reset Password" action already uses. The new user is
+    expected to change it via My Profile > Change Password after
+    their first login.
+    """
+    if request.method == 'POST':
+        form = AdminUserCreateForm(request.POST)
+        if form.is_valid():
+            new_user = form.save(commit=False)
+            new_user.set_password(settings.DEFAULT_RESET_PASSWORD)
+            new_user.save()
+            messages.success(request, f"{new_user.username}'s account was created with the default password.")
         else:
             messages.error(request, next(iter(form.errors.values()))[0])
     return redirect('accounts:user_management')
@@ -307,6 +341,14 @@ def user_toggle_active(request, pk):
 
     if target_user.pk == request.user.pk:
         messages.error(request, "You can't deactivate your own account.")
+        return redirect('accounts:user_management')
+
+    if target_user.role == User.Role.ADMIN:
+        # Admin accounts are protected from deactivation/reactivation
+        # entirely — not just self-protection. This is checked before
+        # the POST branch below so it also blocks the action even if
+        # a request is crafted directly against this URL.
+        messages.error(request, "Admin accounts cannot be deactivated or reactivated.")
         return redirect('accounts:user_management')
 
     if request.method == 'POST':
