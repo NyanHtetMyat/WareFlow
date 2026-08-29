@@ -1795,3 +1795,111 @@
     gap: var(--space-sm);
     padding-bottom: var(--space-md);
 }
+
+/* ═══════════════════ USER DETAIL HEADER (User Management only) ═══════════════════ */
+
+.user-detail-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding-bottom: var(--space-md);
+    margin-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.user-detail-avatar {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+}
+
+.user-detail-avatar-img {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+}
+
+.user-detail-avatar-initial {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-inverse);
+    font-weight: 700;
+    font-size: 1.4rem;
+}
+
+.user-detail-name-block {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+}
+
+.user-detail-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+/* ═══════════════════ 2-COLUMN DETAIL GRID (User Management only) ═══════════════════ */
+/* Scoped entirely to .detail-grid-2col — Products/Suppliers/
+   Categories/Locations don't use this class on their own
+   #detailModalBody, so their single-column .detail-row layout is
+   completely unaffected by this. */
+
+.detail-grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 var(--space-lg);
+}
+
+.detail-grid-2col .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+    padding: var(--space-sm) 0;
+    border-bottom: none;
+}
+
+.detail-grid-2col .detail-value {
+    text-align: left;
+}
+
+@media (max-width: 480px) {
+    .detail-grid-2col {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ═══════════════════ CONFIRMATION MODAL — icon + centered text ═══════════════════ */
+
+.confirm-modal-body {
+    text-align: center;
+    padding: var(--space-xl) var(--space-lg);
+}
+
+.confirm-modal-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    margin: 0 auto var(--space-md);
+    font-size: 1.8rem;
+}
+
+.confirm-modal-icon--danger { background-color: rgba(214, 69, 69, 0.12); color: var(--color-danger); }
+.confirm-modal-icon--warning { background-color: rgba(234, 178, 8, 0.25); color: var(--color-warning); }
+.confirm-modal-icon--success { background-color: rgba(47, 158, 99, 0.12); color: var(--color-success); }
+
+.confirm-modal-text {
+    font-size: 0.95rem;
+    color: var(--color-text);
+    margin: 0;
+}

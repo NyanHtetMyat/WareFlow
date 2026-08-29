@@ -78,6 +78,7 @@
                     data-username="{{ u.username }}"
                     data-is-active="{% if u.is_active %}true{% else %}false{% endif %}"
                     data-is-self="{% if u.is_self %}true{% else %}false{% endif %}"
+                    data-header='{{ u.header_json }}'
                     data-detail='{{ u.detail_json }}'
                     data-edit='{{ u.edit_json }}'>
                     <td class="wf-table-product-name">{{ u.username }}</td>
@@ -114,7 +115,29 @@
                 <h5 class="modal-title">User Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body" id="detailModalBody"></div>
+            <div class="modal-body">
+                <div class="user-detail-header" id="userDetailHeader">
+                    <div class="user-detail-avatar">
+                        <img id="userDetailAvatarImg" class="user-detail-avatar-img" style="display:none;" alt="">
+                        <div id="userDetailAvatarInitial" class="user-detail-avatar-initial"></div>
+                    </div>
+                    <div class="user-detail-name-block">
+                        <span class="user-detail-name" id="userDetailName"></span>
+                        <span class="status-badge" id="userDetailRoleBadge"></span>
+                    </div>
+                </div>
+
+                {% comment%} 
+                    Only First/Last Name, Username, Email, Account Status,
+                    and Date Joined render here now — Photo/Full Name/Role
+                    moved to the header above, so nothing is shown twice.
+                    This div is still populated generically by
+                    management_modals.js exactly as before; only its class
+                    here (scoped to THIS page's CSS) changes the layout to
+                    2 columns instead of 1 stacked column. 
+                {% endcomment %}
+                <div class="detail-grid-2col" id="detailModalBody"></div>
+            </div>
 
             <div class="detail-account-actions">
                 <div class="dashboard-section-label dashboard-section-label--first">Account Actions</div>
@@ -203,7 +226,12 @@
                     <h5 class="modal-title" id="accountActionConfirmTitle">Confirm Action</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body" id="accountActionConfirmBody">Are you sure?</div>
+                <div class="modal-body confirm-modal-body">
+                    <div class="confirm-modal-icon confirm-modal-icon--danger" id="accountActionConfirmIcon">
+                        <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                    </div>
+                    <p class="confirm-modal-text" id="accountActionConfirmBody">Are you sure?</p>
+                </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-approve" id="accountActionConfirmButton">Confirm</button>
@@ -219,15 +247,42 @@
 <script src="{% static 'js/management_modals.js' %}"></script>
 <script src="{% static 'js/user_actions.js' %}"></script>
 <script>
-    // Username display in the Edit modal isn't a real form field
-    // (never submitted — AdminUserEditForm doesn't accept it), so
-    // it's populated here directly from the row's data-username
-    // rather than through management_modals.js's generic
-    // fillEditForm(), which only fills actual form.elements.
+    // Two page-local jobs, both driven off the row that was clicked:
+    //   1. Fill the Edit modal's read-only Username display (not a
+    //      real form field — AdminUserEditForm never accepts it, so
+    //      management_modals.js's generic fillEditForm() correctly
+    //      never touches it either).
+    //   2. Populate the Detail overlay's custom avatar/name/role
+    //      header from data-header — a SEPARATE blob from
+    //      data-detail, so Photo/Full Name/Role only ever render
+    //      once (in this header), never a second time in the
+    //      generic row list below it.
     document.querySelectorAll('.detail-row-trigger').forEach(function (row) {
         row.addEventListener('click', function () {
-            var username = row.getAttribute('data-username');
-            document.getElementById('modal_username_display').value = username;
+            document.getElementById('modal_username_display').value = row.getAttribute('data-username');
+
+            var header = JSON.parse(row.getAttribute('data-header'));
+            var avatarImg = document.getElementById('userDetailAvatarImg');
+            var avatarInitial = document.getElementById('userDetailAvatarInitial');
+            var roleBadge = document.getElementById('userDetailRoleBadge');
+
+            var isSelf = row.getAttribute('data-is-self') === 'true';
+            document.getElementById('userDetailName').innerHTML = header.full_name + (isSelf ? ' <small class="text-muted">(You)</small>' : '');
+
+            avatarInitial.className = 'user-detail-avatar-initial profile-avatar--' + header.role;
+            avatarInitial.textContent = header.avatar_initial;
+
+            if (header.image_url) {
+                avatarImg.src = header.image_url;
+                avatarImg.style.display = '';
+                avatarInitial.style.display = 'none';
+            } else {
+                avatarImg.style.display = 'none';
+                avatarInitial.style.display = '';
+            }
+
+            roleBadge.className = 'status-badge ' + header.role_badge.cls;
+            roleBadge.innerHTML = '<i class="bi ' + header.role_badge.icon + '" aria-hidden="true"></i> ' + header.role_badge.text;
         });
     });
 </script>

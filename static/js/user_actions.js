@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var toggleBtn = document.getElementById('toggleActiveBtn');
     var toggleLabel = document.getElementById('toggleActiveBtnLabel');
     var toggleIcon = document.getElementById('toggleActiveBtnIcon');
+    var editBtn = document.getElementById('detailEditButton');
     if (!resetBtn || !toggleBtn) return;
 
     var current = { pk: null, username: null, isActive: null };
@@ -40,35 +41,63 @@ document.addEventListener('DOMContentLoaded', function () {
                 toggleBtn.className = 'btn btn-sm btn-approve';
             }
 
-            toggleBtn.disabled = isSelf;
-            toggleBtn.title = isSelf ? "You can't deactivate your own account." : '';
+            // On the Admin's own account: hide Edit and
+            // Deactivate/Reactivate entirely (not just disable) —
+            // the matching hard block already exists server-side in
+            // accounts.views.user_edit / user_toggle_active, so this
+            // is UX only, never the actual security boundary. Reset
+            // Password intentionally stays available either way.
+            toggleBtn.style.display = isSelf ? 'none' : '';
+            if (editBtn) editBtn.style.display = isSelf ? 'none' : '';
         });
     });
 
     var confirmModalEl = document.getElementById('accountActionConfirmModal');
     if (!confirmModalEl) return;
     var confirmModal = new bootstrap.Modal(confirmModalEl);
+
+    var detailModalEl = document.getElementById('detailModal');
     var confirmForm = document.getElementById('accountActionConfirmForm');
     var confirmTitle = document.getElementById('accountActionConfirmTitle');
     var confirmBody = document.getElementById('accountActionConfirmBody');
     var confirmButton = document.getElementById('accountActionConfirmButton');
+    var confirmIconWrap = document.getElementById('accountActionConfirmIcon');
+    var confirmIcon = confirmIconWrap ? confirmIconWrap.querySelector('i') : null;
+
+    function setConfirmIcon(variant, iconClass) {
+        if (!confirmIconWrap || !confirmIcon) return;
+        confirmIconWrap.className = 'confirm-modal-icon confirm-modal-icon--' + variant;
+        confirmIcon.className = 'bi ' + iconClass;
+    }
 
     resetBtn.addEventListener('click', function () {
+        var detailModal = bootstrap.Modal.getInstance(detailModalEl);
+        if (detailModal) detailModal.hide();
+
         confirmTitle.textContent = 'Reset Password';
-        confirmBody.textContent = 'Reset ' + current.username + '’s password to the system default? They should change it after logging in.';
+        setConfirmIcon('warning', 'bi-key-fill');
+        confirmBody.innerHTML = 'Reset <strong>' + current.username + '</strong>’s password to the system default? They should change it after logging in.';
         confirmButton.textContent = 'Reset Password';
-        confirmButton.className = 'btn btn-adjustment';
+        confirmButton.className = 'btn btn-dispatch';
         confirmForm.action = confirmForm.dataset.resetUrlTemplate.replace('0', current.pk);
         confirmModal.show();
     });
 
     toggleBtn.addEventListener('click', function () {
         if (toggleBtn.disabled) return;
+        var detailModal = bootstrap.Modal.getInstance(detailModalEl);
+        if (detailModal) detailModal.hide();
         var activating = !current.isActive;
         confirmTitle.textContent = activating ? 'Reactivate Account' : 'Deactivate Account';
-        confirmBody.textContent = (activating ? 'Reactivate ' : 'Deactivate ') + current.username + '’s account?';
+        setConfirmIcon(
+            activating ? 'success' : 'danger',
+            activating ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'
+        );
+        confirmBody.innerHTML = 'Are you sure you want to <strong>' + (activating ? 'reactivate' : 'deactivate') +
+            '</strong> ' + current.username + '’s account? This action will ' +
+            (activating ? 'restore' : 'revoke') + ' their access to the system.';
         confirmButton.textContent = activating ? 'Reactivate' : 'Deactivate';
-        confirmButton.className = activating ? 'btn btn-approve' : 'btn btn-reject';
+        confirmButton.className = activating ? 'btn btn-approve' : 'btn btn-danger';
         confirmForm.action = confirmForm.dataset.toggleUrlTemplate.replace('0', current.pk);
         confirmModal.show();
     });

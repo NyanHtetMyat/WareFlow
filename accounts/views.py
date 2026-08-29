@@ -202,14 +202,25 @@ def user_management(request):
 
         u.is_self = (u.pk == request.user.pk)
 
+        # Split into two blobs: header_json feeds a compact custom
+        # avatar+name+role header (populated by a small page-local
+        # script — see user_management.html), while detail_json
+        # keeps only the fields still shown as generic rows via
+        # management_modals.js's shared renderer. Avoiding repeating
+        # Full Name/Role/Photo in BOTH places is what actually fixes
+        # the overlay's excessive height.
+        u.header_json = json.dumps({
+            "image_url": u.image.url if u.image else "",
+            "avatar_initial": u.avatar_initial,
+            "role": u.role.lower(),
+            "full_name": u.display_name,
+            "role_badge": {"cls": ROLE_BADGE[u.role]['cls'], "icon": ROLE_BADGE[u.role]['icon'], "text": u.get_role_display()},
+        })
         u.detail_json = json.dumps({
-            "Profile Image": {"__type": "image", "url": u.image.url if u.image else ""},
             "First Name": u.first_name or "-",
             "Last Name": u.last_name or "-",
-            "Full / Display Name": u.display_name,
             "Username": u.username,
             "Email": u.email,
-            "Role": {"__type": "badge", "cls": ROLE_BADGE[u.role]['cls'], "icon": ROLE_BADGE[u.role]['icon'], "text": u.get_role_display()},
             "Account Status": (
                 {"__type": "badge", "cls": "status-badge--approved", "icon": "bi-check-circle", "text": "Enabled"}
                 if u.is_active else
@@ -257,8 +268,20 @@ def user_management(request):
 @login_required
 @admin_required
 def user_edit(request, pk):
-    """Admin edits another user's Email/First Name/Last Name/Role. Username is never touched here."""
+    """
+    Admin edits another user's Email/First Name/Last Name/Role.
+    Username is never touched here. Blocked against the Admin's own
+    account — self-editing role/email through this bulk action path
+    is disallowed the same way self-deactivation already is in
+    user_toggle_active below; use My Profile for editing your own
+    details instead.
+    """
     target_user = get_object_or_404(User, pk=pk)
+
+    if target_user.pk == request.user.pk:
+        messages.error(request, "You can't edit your own account here. Use My Profile instead.")
+        return redirect('accounts:user_management')
+
     if request.method == 'POST':
         form = AdminUserEditForm(request.POST, instance=target_user)
         if form.is_valid():
