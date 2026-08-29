@@ -149,12 +149,19 @@
     {% elif user.role == "ADMIN" %}
 
         <li class="nav-item">
-            {# TODO: replace href="#" with {% url 'accounts:user_management' %} #}
-            <!-- Admin functionality is intentionally minimal for now,
-                 per current project priorities (Staff/Manager first). -->
-            <a href="#" class="nav-link" title="Users">
+            <a href="{% url 'accounts:user_management' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'user_management' %}active{% endif %}"
+               title="Users">
                 <i class="bi bi-people nav-icon" aria-hidden="true"></i>
                 <span class="nav-label">Users</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            {# TODO: build out the Password Adjustment Requests page, then replace href="#" with its real URL. Per the architecture doc, this should show a pending-count badge the same way Manager's Adjustment Requests link does (nav_pending_adjustments_count) — reserving the nav slot now so User Management's reusable Detail overlay has a clear future entry point. #}
+            <a href="#" class="nav-link" title="Password Adjustment Requests">
+                <i class="bi bi-key nav-icon" aria-hidden="true"></i>
+                <span class="nav-label">Password Requests</span>
             </a>
         </li>
 

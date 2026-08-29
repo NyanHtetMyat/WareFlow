@@ -1750,3 +1750,48 @@
         width: 100%;
     }
 }
+
+/* ═══════════════════ ROLE BADGES (User Management) ═══════════════════ */
+/* Same light-tint-background + saturated-text pattern as the
+   existing status-badge variants, just under clearer names so
+   "role" and "workflow status" (pending/approved/rejected) stay
+   semantically distinct even though the underlying colors match. */
+
+.status-badge--role-staff {
+    background-color: rgba(30, 42, 69, 0.10);
+    color: var(--color-primary);
+}
+
+.status-badge--role-manager {
+    background-color: rgba(234, 178, 8, 0.25);
+    color: #92700B;
+}
+
+.status-badge--role-admin {
+    background-color: rgba(214, 69, 69, 0.12);
+    color: var(--color-danger);
+}
+
+/* ═══════════════════ DETAIL MODAL — image value ═══════════════════ */
+
+.detail-value-image {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+    border: 1px solid var(--color-border);
+}
+
+/* ═══════════════════ ACCOUNT ACTIONS (User Details overlay) ═══════════════════ */
+
+.detail-account-actions {
+    padding: var(--space-md) var(--space-lg) 0;
+    border-top: 1px solid var(--color-border);
+    margin-top: var(--space-sm);
+}
+
+.detail-account-actions-row {
+    display: flex;
+    gap: var(--space-sm);
+    padding-bottom: var(--space-md);
+}

@@ -29,6 +29,8 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 # Parse comma-separated hosts from .env
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
+# Get the password from .env
+DEFAULT_RESET_PASSWORD = os.environ.get('DEFAULT_RESET_PASSWORD')
 
 # ════════════════════════════════════════════════════════════════════════════
 # INSTALLED APPLICATIONS

@@ -68,3 +68,23 @@ class ChangePasswordForm(PasswordChangeForm):
         self.fields['old_password'].widget.attrs.update({'class': 'form-control'})
         self.fields['new_password1'].widget.attrs.update({'class': 'form-control'})
         self.fields['new_password2'].widget.attrs.update({'class': 'form-control'})
+
+
+class AdminUserEditForm(forms.ModelForm):
+    """
+    Admin-facing edit form for another user's account. Username is
+    deliberately NOT listed here — per the confirmed requirement,
+    it stays read-only unless a future need explicitly justifies
+    changing it. Password is handled entirely separately (see
+    accounts.views.user_reset_password), never inside this form.
+    """
+
+    class Meta:
+        model = User
+        fields = ['email', 'first_name', 'last_name', 'role']
+        widgets = {
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First name'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last name'}),
+            'role': forms.Select(attrs={'class': 'form-select'}),
+        }

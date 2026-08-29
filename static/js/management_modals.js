@@ -45,6 +45,17 @@ document.addEventListener('DOMContentLoaded', function () {
             return { el: badge, stacked: false };
         }
 
+        if (value && typeof value === 'object' && value.__type === 'image') {
+            if (!value.url) {
+                return { el: document.createTextNode('No photo uploaded'), stacked: false };
+            }
+            var img = document.createElement('img');
+            img.src = value.url;
+            img.alt = 'Profile photo';
+            img.className = 'detail-value-image';
+            return { el: img, stacked: true };
+        }
+
         if (Array.isArray(value)) {
             if (value.length === 0) {
                 var empty = document.createTextNode('—');

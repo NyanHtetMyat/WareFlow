@@ -1,0 +1,234 @@
+{% extends "layouts/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}User Management — WareFlow{% endblock %}
+
+{% block dashboard_content %}
+<div class="form-page-header">
+    <div class="form-page-heading">
+        <div class="form-page-icon form-page-icon--adjustment">
+            <i class="bi bi-people" aria-hidden="true"></i>
+        </div>
+        <div>
+            <h1 class="form-page-title">User Management</h1>
+            <p class="form-page-subtitle">View and manage every WareFlow account</p>
+        </div>
+    </div>
+</div>
+
+<div class="list-toolbar">
+    <form method="get" class="list-filter-form">
+        <div class="search-input-group">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Search username or email…">
+        </div>
+
+        <select name="role" class="form-select">
+            <option value="">All Roles</option>
+            {% for value, label in role_choices %}
+                <option value="{{ value }}" {% if role_filter == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="status" class="form-select">
+            <option value="">All Statuses</option>
+            <option value="enabled" {% if status_filter == "enabled" %}selected{% endif %}>Enabled</option>
+            <option value="disabled" {% if status_filter == "disabled" %}selected{% endif %}>Disabled</option>
+        </select>
+
+        <select name="sort" class="form-select">
+            <option value="username" {% if sort == "username" %}selected{% endif %}>Sort: Username</option>
+            <option value="email" {% if sort == "email" %}selected{% endif %}>Sort: Email</option>
+            <option value="full_name" {% if sort == "full_name" %}selected{% endif %}>Sort: Full Name</option>
+            <option value="role" {% if sort == "role" %}selected{% endif %}>Sort: Role</option>
+            <option value="status" {% if sort == "status" %}selected{% endif %}>Sort: Account Status</option>
+        </select>
+
+        <input type="hidden" name="dir" id="id_dir" value="{{ dir }}">
+        <button type="button" class="btn btn-outline-secondary btn-icon-square" id="dir-toggle-button">
+            <i class="bi bi-sort-down" aria-hidden="true"></i>
+        </button>
+
+        <button type="submit" class="btn btn-adjustment">
+            <i class="bi bi-funnel" aria-hidden="true"></i> Filter
+        </button>
+        {% if search_query or role_filter or status_filter %}
+            <a href="{% url 'accounts:user_management' %}" class="btn btn-outline-secondary">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if page_obj.object_list %}
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="wf-table">
+            <thead>
+                <tr>
+                    <th><i class="bi bi-person" aria-hidden="true"></i> Username</th>
+                    <th><i class="bi bi-envelope" aria-hidden="true"></i> Email</th>
+                    <th><i class="bi bi-card-text" aria-hidden="true"></i> Full Name</th>
+                    <th><i class="bi bi-person-badge" aria-hidden="true"></i> Role</th>
+                    <th><i class="bi bi-flag" aria-hidden="true"></i> Account Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in page_obj.object_list %}
+                <tr class="detail-row-trigger"
+                    data-pk="{{ u.pk }}"
+                    data-username="{{ u.username }}"
+                    data-is-active="{% if u.is_active %}true{% else %}false{% endif %}"
+                    data-is-self="{% if u.is_self %}true{% else %}false{% endif %}"
+                    data-detail='{{ u.detail_json }}'
+                    data-edit='{{ u.edit_json }}'>
+                    <td class="wf-table-product-name">{{ u.username }}</td>
+                    <td class="text-muted">{{ u.email }}</td>
+                    <td>{{ u.full_name_display }}</td>
+                    <td>
+                        <span class="status-badge {% if u.role == 'STAFF' %}status-badge--role-staff{% elif u.role == 'MANAGER' %}status-badge--role-manager{% else %}status-badge--role-admin{% endif %}">
+                            {{ u.get_role_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if u.is_active %}
+                            <span class="status-badge status-badge--approved"><i class="bi bi-check-circle" aria-hidden="true"></i> Enabled</span>
+                        {% else %}
+                            <span class="status-badge status-badge--rejected"><i class="bi bi-x-circle" aria-hidden="true"></i> Disabled</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring %}
+{% else %}
+    {% include "components/empty_state.html" with icon="bi-people" title="No users found" subtitle="Try adjusting your search or filters." %}
+{% endif %}
+
+<!-- Detail Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">User Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="detailModalBody"></div>
+
+            <div class="detail-account-actions">
+                <div class="dashboard-section-label dashboard-section-label--first">Account Actions</div>
+                <div class="detail-account-actions-row">
+                    <button type="button" class="btn btn-sm btn-adjustment" id="resetPasswordBtn">
+                        <i class="bi bi-key" aria-hidden="true"></i> Reset Password
+                    </button>
+                    <button type="button" class="btn btn-sm btn-reject" id="toggleActiveBtn">
+                        <i class="bi bi-slash-circle" aria-hidden="true" id="toggleActiveBtnIcon"></i>
+                        <span id="toggleActiveBtnLabel">Deactivate Account</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-adjustment" id="detailEditButton" data-edit-title="Edit User">
+                    <i class="bi bi-pencil" aria-hidden="true"></i> Edit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="editModalForm" data-edit-url-template="{% url 'accounts:user_edit' 0 %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalTitle">Edit User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-field">
+                        <label class="form-field-label"><i class="bi bi-person" aria-hidden="true"></i> Username</label>
+                        <input type="text" class="form-control form-field-readonly" value="" id="modal_username_display" disabled readonly>
+                        <div class="form-text">Username cannot be changed.</div>
+                    </div>
+                    <div class="form-field">
+                        <label for="modal_email" class="form-field-label"><i class="bi bi-envelope" aria-hidden="true"></i> Email</label>
+                        <input type="email" name="email" id="modal_email" class="form-control" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-field">
+                                <label for="modal_first_name" class="form-field-label">First Name</label>
+                                <input type="text" name="first_name" id="modal_first_name" class="form-control">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-field">
+                                <label for="modal_last_name" class="form-field-label">Last Name</label>
+                                <input type="text" name="last_name" id="modal_last_name" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-field">
+                        <label for="modal_role" class="form-field-label"><i class="bi bi-person-badge" aria-hidden="true"></i> Role</label>
+                        <select name="role" id="modal_role" class="form-select">
+                            {% for value, label in role_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-adjustment">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Shared Account Action Confirm Modal (Deactivate/Reactivate/Reset Password) -->
+<div class="modal fade" id="accountActionConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="accountActionConfirmForm"
+                  data-toggle-url-template="{% url 'accounts:user_toggle_active' 0 %}"
+                  data-reset-url-template="{% url 'accounts:user_reset_password' 0 %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="accountActionConfirmTitle">Confirm Action</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="accountActionConfirmBody">Are you sure?</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-approve" id="accountActionConfirmButton">Confirm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/sort_toggle.js' %}"></script>
+<script src="{% static 'js/management_modals.js' %}"></script>
+<script src="{% static 'js/user_actions.js' %}"></script>
+<script>
+    // Username display in the Edit modal isn't a real form field
+    // (never submitted — AdminUserEditForm doesn't accept it), so
+    // it's populated here directly from the row's data-username
+    // rather than through management_modals.js's generic
+    // fillEditForm(), which only fills actual form.elements.
+    document.querySelectorAll('.detail-row-trigger').forEach(function (row) {
+        row.addEventListener('click', function () {
+            var username = row.getAttribute('data-username');
+            document.getElementById('modal_username_display').value = username;
+        });
+    });
+</script>
+{% endblock %}
