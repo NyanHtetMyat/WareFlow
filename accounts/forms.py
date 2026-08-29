@@ -55,6 +55,25 @@ class ProfileForm(forms.ModelForm):
         }
 
 
+class ForgotPasswordForm(forms.Form):
+    """
+    Public "I forgot my password" form. Deliberately a plain Form,
+    not a ModelForm — it never creates or edits a User directly.
+    accounts.services.submit_password_reset_request does the actual
+    lookup (by username OR email) and PasswordResetRequest creation,
+    and deliberately never raises a validation error for "no match
+    found" — see that function's docstring for why.
+    """
+    identifier = forms.CharField(
+        label="Username or Email",
+        widget=forms.TextInput(attrs={
+            'class': 'form-control auth-field',
+            'placeholder': 'Username or Email',
+            'autofocus': True,
+        })
+    )
+
+
 class ChangePasswordForm(PasswordChangeForm):
     """
     Thin wrapper around Django's built-in PasswordChangeForm, adding

@@ -158,9 +158,15 @@
         </li>
 
         <li class="nav-item">
-            {# TODO: build out the Password Adjustment Requests page, then replace href="#" with its real URL. Per the architecture doc, this should show a pending-count badge the same way Manager's Adjustment Requests link does (nav_pending_adjustments_count) — reserving the nav slot now so User Management's reusable Detail overlay has a clear future entry point. #}
-            <a href="#" class="nav-link" title="Password Adjustment Requests">
-                <i class="bi bi-key nav-icon" aria-hidden="true"></i>
+            <a href="{% url 'accounts:password_reset_requests' %}"
+               class="nav-link {% if request.resolver_match.url_name == 'password_reset_requests' %}active{% endif %}"
+               title="Password Requests">
+                <span class="nav-icon-wrap">
+                    <i class="bi bi-key nav-icon" aria-hidden="true"></i>
+                    {% if nav_pending_password_requests_count > 0 %}
+                        <span class="nav-badge">{{ nav_pending_password_requests_count }}</span>
+                    {% endif %}
+                </span>
                 <span class="nav-label">Password Requests</span>
             </a>
         </li>

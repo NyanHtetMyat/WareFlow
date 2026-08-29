@@ -14,10 +14,12 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 
+from . import services
 from .decorators import admin_required
-from .forms import WareFlowLoginForm, ProfileForm, ChangePasswordForm, AdminUserEditForm, AdminUserCreateForm
-from .models import Notification, User
+from .forms import WareFlowLoginForm, ProfileForm, ChangePasswordForm, AdminUserEditForm, AdminUserCreateForm, ForgotPasswordForm
+from .models import Notification, PasswordResetRequest, User
 
 # Role badge styling + sort rank, shared by the table and the
 # detail overlay below — one place to update if a role's color
@@ -63,6 +65,29 @@ def logout_view(request):
     
     # 3. Redirect to your login page (or home page)
     return redirect('accounts:login')
+
+
+def forgot_password_view(request):
+    """
+    Public (no login required) "I forgot my password" page. Accepts
+    a username OR email and always shows the same generic
+    confirmation message on submit, regardless of whether it
+    actually matched an account — see
+    accounts.services.submit_password_reset_request for why.
+    """
+    if request.user.is_authenticated:
+        return redirect('accounts:dashboard_redirect')
+
+    if request.method == 'POST':
+        form = ForgotPasswordForm(request.POST)
+        if form.is_valid():
+            services.submit_password_reset_request(form.cleaned_data['identifier'])
+            messages.success(request, "If that account exists, an Admin has been notified and will reset your password soon.")
+            return redirect('accounts:login')
+    else:
+        form = ForgotPasswordForm()
+
+    return render(request, 'accounts/forgot_password.html', {'form': form})
 
 
 @login_required
@@ -376,3 +401,83 @@ def user_reset_password(request, pk):
         target_user.save(update_fields=['password'])
         messages.success(request, f"{target_user.username}'s password was reset to the system default.")
     return redirect('accounts:user_management')
+
+
+@login_required
+@admin_required
+def password_reset_requests(request):
+    """
+    Admin-only review queue: every PENDING password reset request,
+    newest first, paginated at 10 — mirrors Manager's Adjustment
+    Requests page (see warehouse.views.adjustment_requests).
+    """
+    pending_requests = (
+        PasswordResetRequest.objects
+        .filter(status=PasswordResetRequest.Status.PENDING)
+        .select_related('user')
+    )
+
+    paginator = Paginator(pending_requests, 10)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    querystring = request.GET.copy()
+    querystring.pop('page', None)
+    querystring = querystring.urlencode()
+
+    for r in page_obj.object_list:
+        # Same header_json / detail_json split as user_management's
+        # ROLE_BADGE-driven header — reused here so the "User
+        # Details" overlay renders identically on both pages.
+        r.header_json = json.dumps({
+            "image_url": r.user.image.url if r.user.image else "",
+            "avatar_initial": r.user.avatar_initial,
+            "role": r.user.role.lower(),
+            "full_name": r.user.display_name,
+            "role_badge": {
+                "cls": ROLE_BADGE[r.user.role]['cls'],
+                "icon": ROLE_BADGE[r.user.role]['icon'],
+                "text": r.user.get_role_display(),
+            },
+        })
+        r.detail_json = json.dumps({
+            "Username": r.user.username,
+            "Email": r.user.email,
+            "Requested At": r.requested_at.strftime("%b %d, %Y %I:%M %p"),
+        })
+
+    return render(request, 'accounts/password_reset_requests.html', {
+        'page_title': 'Password Reset Requests',
+        'page_obj': page_obj,
+        'querystring': querystring,
+        'pending_count': pending_requests.count(),
+    })
+
+
+@login_required
+@admin_required
+def password_reset_complete(request, pk):
+    """Resets the requesting user's password AND marks this request COMPLETED — see services.complete_password_reset_request."""
+    reset_request = get_object_or_404(PasswordResetRequest, pk=pk)
+    if request.method == 'POST':
+        try:
+            services.complete_password_reset_request(reset_request, request.user)
+            messages.success(request, f"{reset_request.user.username}'s password was reset to the system default.")
+        except ValidationError as e:
+            messages.error(request, e.messages[0])
+    return redirect('accounts:password_reset_requests')
+
+
+@login_required
+@admin_required
+def password_reset_reject(request, pk):
+    """Marks a PENDING password reset request REJECTED, with an optional short reason."""
+    reset_request = get_object_or_404(PasswordResetRequest, pk=pk)
+    if request.method == 'POST':
+        try:
+            services.reject_password_reset_request(
+                reset_request, request.user,
+                rejection_reason=request.POST.get('rejection_reason', '').strip(),
+            )
+            messages.success(request, f"Password reset request for {reset_request.user.username} was rejected.")
+        except ValidationError as e:
+            messages.error(request, e.messages[0])
+    return redirect('accounts:password_reset_requests')

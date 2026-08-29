@@ -155,6 +155,7 @@ class Notification(models.Model):
         ADJUSTMENT_APPROVED = "ADJUSTMENT_APPROVED", "Adjustment Approved"
         ADJUSTMENT_REJECTED = "ADJUSTMENT_REJECTED", "Adjustment Rejected"
         ADJUSTMENT_SUBMITTED = "ADJUSTMENT_SUBMITTED", "Adjustment Submitted"
+        PASSWORD_RESET_REQUESTED = "PASSWORD_RESET_REQUESTED", "Password Reset Requested"
 
     # CASCADE (not PROTECT, unlike AuditLog.user) — notifications
     # are transient inbox items, not permanent historical records,
@@ -178,3 +179,60 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.user.username} — {self.message}"
+
+
+class PasswordResetRequest(models.Model):
+    """
+    A "forgot my password" request, raised from the public Forgot
+    Password page (no login required to submit one — that's the
+    whole point). Sits at PENDING until an Admin either resets the
+    account's password to the system default (see
+    accounts.services.complete_password_reset_request — the exact
+    same DEFAULT_RESET_PASSWORD mechanism already used by User
+    Management's per-account Reset Password action) or rejects it.
+
+    Only ONE outstanding PENDING request per user is allowed at a
+    time — enforced in accounts.services.submit_password_reset_request
+    — so the Admin's queue can't be spammed by repeated submissions
+    for the same account.
+
+    A dedicated permanent history table (separate from this live
+    workflow queue) is planned as future work — intentionally not
+    built yet. This model is NOT that table.
+    """
+
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        COMPLETED = "COMPLETED", "Completed"
+        REJECTED = "REJECTED", "Rejected"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="password_reset_requests",
+        help_text="The account whose password reset was requested.",
+    )
+    requested_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    # SET_NULL (not PROTECT, unlike AuditLog.user) — mirrors
+    # StockAdjustmentRequest.manager exactly. This is a live
+    # workflow record, not a permanent audit trail, so it's fine
+    # for this to go NULL if the resolving Admin's account is ever
+    # removed.
+    resolved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="resolved_password_reset_requests",
+        help_text="The Admin who reset or rejected this request.",
+    )
+    rejection_reason = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ["-requested_at"]
+
+    def __str__(self):
+        return f"Password Reset #{self.pk} — {self.user.username} ({self.status})"

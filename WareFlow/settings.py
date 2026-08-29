@@ -95,6 +95,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'accounts.context_processors.notifications',
                 'accounts.context_processors.pending_adjustments_badge',
+                'accounts.context_processors.pending_password_reset_badge',
             ],
         },
     },

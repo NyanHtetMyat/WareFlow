@@ -15,7 +15,7 @@ identically across ~25+ views is exactly that threshold; adding
 would have been real, spread-out duplication.
 """
 
-from .models import Notification
+from .models import Notification, PasswordResetRequest
 from warehouse.models import StockAdjustmentRequest
 
 
@@ -44,3 +44,17 @@ def pending_adjustments_badge(request):
         ).count()
         return {'nav_pending_adjustments_count': count}
     return {'nav_pending_adjustments_count': 0}
+
+
+def pending_password_reset_badge(request):
+    """
+    Admin-only counterpart to pending_adjustments_badge above — same
+    reasoning, just for PasswordResetRequest instead of
+    StockAdjustmentRequest.
+    """
+    if request.user.is_authenticated and getattr(request.user, 'role', None) == 'ADMIN':
+        count = PasswordResetRequest.objects.filter(
+            status=PasswordResetRequest.Status.PENDING
+        ).count()
+        return {'nav_pending_password_requests_count': count}
+    return {'nav_pending_password_requests_count': 0}

@@ -74,6 +74,8 @@ ASSUMPTION / PROVISIONAL DESIGN DECISION:
                                 <i class="bi bi-check-circle" aria-hidden="true"></i>
                             {% elif notif.notification_type == "ADJUSTMENT_REJECTED" %}
                                 <i class="bi bi-x-circle" aria-hidden="true"></i>
+                            {% elif notif.notification_type == "PASSWORD_RESET_REQUESTED" %}
+                                <i class="bi bi-key" aria-hidden="true"></i>
                             {% else %}
                                 <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
                             {% endif %}
