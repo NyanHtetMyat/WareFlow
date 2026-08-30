@@ -21,16 +21,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY SETTINGS
 # ════════════════════════════════════════════════════════════════════════════
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'fallback-insecure-key-dev-only')
+# SECRET_KEY = os.environ.get('SECRET_KEY', 'fallback-insecure-key-dev-only')
+SECRET_KEY = "your-secret-key-change-this-before-deployment"
 
 # DEBUG should be False in production
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+# DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = True
 
 # Parse comma-separated hosts from .env
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+# ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
 # Get the password from .env
-DEFAULT_RESET_PASSWORD = os.environ.get('DEFAULT_RESET_PASSWORD')
+# DEFAULT_RESET_PASSWORD = os.environ.get('DEFAULT_RESET_PASSWORD')
+DEFAULT_RESET_PASSWORD = "wareflow123!"
 
 # ════════════════════════════════════════════════════════════════════════════
 # INSTALLED APPLICATIONS
@@ -113,7 +117,7 @@ WSGI_APPLICATION = 'WareFlow.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db-profile.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
