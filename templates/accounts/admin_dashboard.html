@@ -1,0 +1,67 @@
+{% extends "layouts/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Dashboard — WareFlow{% endblock %}
+
+{% block dashboard_content %}
+<div class="form-page-header">
+    <div class="form-page-heading">
+        <div class="form-page-icon form-page-icon--adjustment">
+            <i class="bi bi-speedometer2" aria-hidden="true"></i>
+        </div>
+        <div>
+            <h1 class="form-page-title">Welcome back, {{ user.username }}</h1>
+            <p class="form-page-subtitle">Account management overview</p>
+        </div>
+    </div>
+</div>
+
+<div class="dash-hero-grid">
+
+    {# ── User Role Distribution: same compact card sizing as Manager's Stock Status gauge ── #}
+    <div class="dash-stock-gauge-card">
+        <h2 class="dashboard-section-label dashboard-section-label--first">User Role Distribution</h2>
+
+        <div class="role-chart-wrap">
+            <canvas id="roleDistributionChart"></canvas>
+        </div>
+    </div>
+
+    {# ── Total Users hero + 3 supporting KPIs ── #}
+    <div class="dash-activity-stack">
+        <div class="kpi-card kpi-card--hero kpi-card--primary">
+            <div class="kpi-card-icon"><i class="bi bi-people" aria-hidden="true"></i></div>
+            <div class="kpi-card-value">{{ stats.total_users }}</div>
+            <div class="kpi-card-label">Total Users</div>
+            <i class="bi bi-people-fill kpi-card-watermark" aria-hidden="true"></i>
+        </div>
+
+        <div class="kpi-grid kpi-grid--3col">
+            <div class="kpi-card kpi-card--success">
+                <div class="kpi-card-icon"><i class="bi bi-person-check" aria-hidden="true"></i></div>
+                <div class="kpi-card-value">{{ stats.active_users }}</div>
+                <div class="kpi-card-label">Active Users</div>
+            </div>
+            <div class="kpi-card kpi-card--warning">
+                <div class="kpi-card-icon"><i class="bi bi-person-x" aria-hidden="true"></i></div>
+                <div class="kpi-card-value">{{ stats.disabled_users }}</div>
+                <div class="kpi-card-label">Disabled Users</div>
+            </div>
+            <a href="{% url 'accounts:password_reset_requests' %}?tab=pending" class="kpi-card kpi-card--adjustment">
+                <i class="bi bi-arrow-right kpi-card-link-arrow" aria-hidden="true"></i>
+                <div class="kpi-card-icon"><i class="bi bi-key" aria-hidden="true"></i></div>
+                <div class="kpi-card-value">{{ stats.pending_password_requests }}</div>
+                <div class="kpi-card-label">Pending Reset Requests</div>
+            </a>
+        </div>
+    </div>
+
+</div>
+
+{{ role_distribution|json_script:"role-distribution-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="{% static 'js/admin_dashboard_chart.js' %}"></script>
+{% endblock %}

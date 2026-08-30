@@ -909,6 +909,22 @@
     }
 }
 
+/* admin dashboard's role distribution chart — reuses
+   .dash-stock-gauge-card as its outer card (identical compact
+   sizing to manager dashboard's stock status card, which is what
+   keeps this page from growing a permanent scrollbar). unlike
+   .stock-gauge-wrap (fixed small size, deliberately compact for a
+   gauge), this wrap grows via flex: 1 to fill whatever height
+   .dash-hero-grid's own stretch gives the card — the card's
+   overall height still comes entirely from that grid stretch, not
+   from this rule.  */
+.role-chart-wrap {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    min-height: 200px;
+}
+
 /* ── Stock Status gauge card ── */
 
 .dash-stock-gauge-card {
@@ -1436,6 +1452,35 @@
     .kpi-grid--3col {
         grid-template-columns: 1fr;
     }
+}
+
+/* no existing dashboard has a clickable kpi card yet — this makes
+   an <a class="kpi-card"> render pixel-identical to the existing
+   div-based ones, rather than introducing a separate "clickable
+   card" visual style. used by the admin dashboard's pending
+   password requests card.
+
+   color is set explicitly here, not "inherit" — a.kpi-card (an
+   element+class selector) is more specific than .kpi-card alone,
+   so it would otherwise always win over .kpi-card's own
+   color: var(--color-text-inverse) and inherit dark body text
+   instead, regardless of stylesheet order. */
+a.kpi-card {
+    text-decoration: none;
+    color: var(--color-text-inverse);
+    display: block;
+    cursor: pointer;
+}
+
+/* small top-right affordance marking a kpi card as clickable —
+   only added to cards that are actual <a> links (currently just
+   pending reset requests), never to the plain div-based ones. */
+.kpi-card-link-arrow {
+    position: absolute;
+    top: var(--space-sm);
+    right: var(--space-md);
+    font-size: 1.5rem;
+    opacity: 0.75;
 }
 
 .kpi-card {

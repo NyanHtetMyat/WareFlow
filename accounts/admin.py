@@ -11,7 +11,7 @@ raw Django admin interface.
 
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User
+from .models import User, PasswordResetRequest, Notification
 
 
 class WareFlowUserAdmin(UserAdmin):
@@ -41,3 +41,5 @@ class WareFlowUserAdmin(UserAdmin):
 
 
 admin.site.register(User, WareFlowUserAdmin)
+admin.site.register(PasswordResetRequest)
+admin.site.register(Notification)

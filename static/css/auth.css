@@ -112,3 +112,7 @@ body.auth-page {
 .auth-submit-btn:active {
     transform: translateY(0);
 }
+
+.auth-non-field-errors ul {
+    margin-bottom: 0 !important;
+}

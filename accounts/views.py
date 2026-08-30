@@ -11,7 +11,7 @@ from django.conf import settings
 from django.contrib.auth import login as auth_login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -109,8 +109,61 @@ def dashboard_redirect(request):
     if request.user.is_manager:
         return redirect('warehouse:manager_dashboard')
 
+    if request.user.is_admin:
+        return redirect('accounts:admin_dashboard')
+
     return render(request, 'accounts/placeholder_dashboard.html', {
         'role': request.user.get_role_display(),
+    })
+
+
+@login_required
+@admin_required
+def admin_dashboard(request):
+    """
+    Admin's own dashboard — deliberately scoped to account
+    management only (per the confirmed requirement), NOT warehouse
+    operations. Two-column layout reuses Manager Dashboard's own
+    .dash-hero-grid mechanics exactly (chart on the left, a KPI
+    column on the right that auto-stretches to match its height) —
+    just with account-management content instead of warehouse
+    content.
+    """
+    total_users = User.objects.count()
+    active_users = User.objects.filter(is_active=True).count()
+    disabled_users = total_users - active_users
+    pending_password_requests = PasswordResetRequest.objects.filter(
+        status=PasswordResetRequest.Status.PENDING
+    ).count()
+
+    # Seed every role at 0 first so a role with zero users still
+    # shows its own bar (and its own axis label) on the chart,
+    # rather than silently disappearing from the dataset.
+    role_counts = {role: 0 for role in User.Role.values}
+    for row in User.objects.values('role').annotate(count=Count('id')):
+        role_counts[row['role']] = row['count']
+
+    role_distribution = {
+        'labels': [User.Role.STAFF.label, User.Role.MANAGER.label, User.Role.ADMIN.label],
+        'values': [
+            role_counts[User.Role.STAFF],
+            role_counts[User.Role.MANAGER],
+            role_counts[User.Role.ADMIN],
+        ],
+        # Chart's Y-axis is pinned to this, not to the tallest
+        # individual bar — see admin_dashboard_chart.js.
+        'total': total_users,
+    }
+
+    return render(request, 'accounts/admin_dashboard.html', {
+        'page_title': 'Dashboard',
+        'stats': {
+            'total_users': total_users,
+            'active_users': active_users,
+            'disabled_users': disabled_users,
+            'pending_password_requests': pending_password_requests,
+        },
+        'role_distribution': role_distribution,
     })
 
 
