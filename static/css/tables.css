@@ -85,6 +85,21 @@
     color: var(--color-text);
 }
 
+/* same ellipsis-truncation technique as .profile-name-truncate
+   (components.css), just sized for a table cell instead of the
+   navbar's fixed 80px. pairs with a data-bs-toggle="tooltip" on
+   the same element to reveal the full value on hover — the
+   project's existing tooltip convention (tooltips.js is loaded
+   globally in base.html and auto-initializes on page load). */
+.wf-table-truncate {
+    display: inline-block;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+}
+
 .location-chip {
     display: inline-flex;
     align-items: center;

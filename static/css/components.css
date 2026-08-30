@@ -112,7 +112,7 @@
 .nav-items--bottom {
     flex-grow: 0;
     margin-top: auto;
-    padding-top: var(--space-sm);
+    padding: var(--space-sm) 0;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -1011,7 +1011,7 @@
 }
 
 .report-tab {
-    padding: 0.5rem 1rem;
+    padding: 0.4rem 1rem;
     border-radius: 999px;
     font-size: 0.9rem;
     font-weight: 600;

@@ -407,49 +407,123 @@ def user_reset_password(request, pk):
 @admin_required
 def password_reset_requests(request):
     """
-    Admin-only review queue: every PENDING password reset request,
-    newest first, paginated at 10 — mirrors Manager's Adjustment
-    Requests page (see warehouse.views.adjustment_requests).
+    Admin-only review page for PasswordResetRequest, in two tabs
+    sharing this one URL (?tab=pending / ?tab=history — pending is
+    the default whenever the page is opened fresh, mirroring
+    warehouse.views.submit_adjustment_request's own tab param):
+
+      - Pending: every PENDING request as actionable cards (click a
+        card -> "User Details" overlay -> Reset Password / Reject).
+        Unchanged behavior from before this tab split.
+      - History: every COMPLETED/REJECTED request (PENDING never
+        appears here — see the .exclude() below) in a standard
+        WareFlow searchable/filterable/sortable/paginated table,
+        read-only — no row-click overlay, matching the same
+        "actionable table = overlay, read-only table = no overlay"
+        rule Audit Logs already follows.
     """
-    pending_requests = (
-        PasswordResetRequest.objects
-        .filter(status=PasswordResetRequest.Status.PENDING)
-        .select_related('user')
-    )
+    tab = request.GET.get('tab', 'pending')
+    if tab not in ('pending', 'history'):
+        tab = 'pending'
 
-    paginator = Paginator(pending_requests, 10)
-    page_obj = paginator.get_page(request.GET.get('page'))
-    querystring = request.GET.copy()
-    querystring.pop('page', None)
-    querystring = querystring.urlencode()
-
-    for r in page_obj.object_list:
-        # Same header_json / detail_json split as user_management's
-        # ROLE_BADGE-driven header — reused here so the "User
-        # Details" overlay renders identically on both pages.
-        r.header_json = json.dumps({
-            "image_url": r.user.image.url if r.user.image else "",
-            "avatar_initial": r.user.avatar_initial,
-            "role": r.user.role.lower(),
-            "full_name": r.user.display_name,
-            "role_badge": {
-                "cls": ROLE_BADGE[r.user.role]['cls'],
-                "icon": ROLE_BADGE[r.user.role]['icon'],
-                "text": r.user.get_role_display(),
-            },
-        })
-        r.detail_json = json.dumps({
-            "Username": r.user.username,
-            "Email": r.user.email,
-            "Requested At": r.requested_at.strftime("%b %d, %Y %I:%M %p"),
-        })
-
-    return render(request, 'accounts/password_reset_requests.html', {
+    context = {
         'page_title': 'Password Reset Requests',
-        'page_obj': page_obj,
-        'querystring': querystring,
-        'pending_count': pending_requests.count(),
-    })
+        'tab': tab,
+        'pending_count': PasswordResetRequest.objects.filter(
+            status=PasswordResetRequest.Status.PENDING
+        ).count(),
+    }
+
+    if tab == 'history':
+        search_query = request.GET.get('q', '').strip()
+        status_filter = request.GET.get('status', '')
+        sort_field = request.GET.get('sort', 'resolved_at')
+        sort_dir = request.GET.get('dir', 'desc')
+
+        history_qs = (
+            PasswordResetRequest.objects
+            .exclude(status=PasswordResetRequest.Status.PENDING)
+            .select_related('user', 'resolved_by')
+        )
+
+        if search_query:
+            history_qs = history_qs.filter(
+                Q(user__username__icontains=search_query) | Q(user__email__icontains=search_query)
+            )
+
+        if status_filter:
+            history_qs = history_qs.filter(status=status_filter)
+
+        sort_map = {
+            'user': 'user__username',
+            'requested_at': 'requested_at',
+            'resolved_at': 'resolved_at',
+            'resolved_by': 'resolved_by__username',
+            'status': 'status',
+        }
+        order_field = sort_map.get(sort_field, 'resolved_at')
+        if sort_dir == 'desc':
+            order_field = '-' + order_field
+        history_qs = history_qs.order_by(order_field)
+
+        paginator = Paginator(history_qs, 10)
+        page_obj = paginator.get_page(request.GET.get('page'))
+
+        querystring = request.GET.copy()
+        querystring['tab'] = 'history'
+        querystring.pop('page', None)
+        querystring = querystring.urlencode()
+
+        context.update({
+            'page_obj': page_obj,
+            'search_query': search_query,
+            'status_filter': status_filter,
+            'sort': sort_field,
+            'dir': sort_dir,
+            'querystring': querystring,
+        })
+    else:
+        pending_requests = (
+            PasswordResetRequest.objects
+            .filter(status=PasswordResetRequest.Status.PENDING)
+            .select_related('user')
+        )
+
+        paginator = Paginator(pending_requests, 10)
+        page_obj = paginator.get_page(request.GET.get('page'))
+
+        querystring = request.GET.copy()
+        querystring['tab'] = 'pending'
+        querystring.pop('page', None)
+        querystring = querystring.urlencode()
+
+        for r in page_obj.object_list:
+            # Same header_json / detail_json split as user_management's
+            # ROLE_BADGE-driven header — reused here so the "User
+            # Details" overlay renders identically on both pages.
+            r.header_json = json.dumps({
+                "image_url": r.user.image.url if r.user.image else "",
+                "avatar_initial": r.user.avatar_initial,
+                "role": r.user.role.lower(),
+                "full_name": r.user.display_name,
+                "role_badge": {
+                    "cls": ROLE_BADGE[r.user.role]['cls'],
+                    "icon": ROLE_BADGE[r.user.role]['icon'],
+                    "text": r.user.get_role_display(),
+                },
+            })
+            r.detail_json = json.dumps({
+                "Username": r.user.username,
+                "Email": r.user.email,
+                "Requested At": r.requested_at.strftime("%b %d, %Y %I:%M %p"),
+            })
+
+        context.update({
+            'page_obj': page_obj,
+            'querystring': querystring,
+        })
+
+    return render(request, 'accounts/password_reset_requests.html', context)
 
 
 @login_required
